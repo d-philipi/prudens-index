@@ -1,0 +1,30 @@
+---
+description: Cursor pointer em elementos clicáveis da UI (web)
+globs: ["apps/web/**/*"]
+alwaysApply: true
+---
+
+# Interação e cursor (apps/web)
+
+## Regra global
+
+Estilos base em `apps/web/src/app/globals.css` aplicam `cursor: pointer` em:
+
+- `button`, `a[href]`, `[role="button"]`
+- `label` de checkbox/radio/file e `label[for]`
+- `select`, `summary`, inputs `button`/`submit`/`reset`/`file`
+- classe utilitária `.cursor-pointer` quando o elemento não for semântico (ex.: área de dropzone)
+
+Estados desabilitados usam `cursor: not-allowed`.
+
+## Ao criar UI
+
+- Preferir `<button type="button">` ou `<Link>` / `<a href>` em vez de `<div onClick>`.
+- Se usar `<div>` ou `<span>` clicável, adicionar `role="button"`, `tabIndex={0}`, teclado acessível e `className="cursor-pointer"`.
+- Não sobrescrever com `cursor-default` em controles interativos, salvo texto selecionável.
+
+## Upload de planilhas
+
+- Formatos de planilha centralizados em `@prudens/shared/spreadsheetFormats` (usado na web e na API).
+- Filtro do Explorer: `SPREADSHEET_FILE_ACCEPT` (somente extensões). Drag-and-drop: `react-dropzone` sem `accept`, só `validator`.
+- Não usar `accept` do `react-dropzone` nem MIME genéricos (`text/plain`, `application/octet-stream`).

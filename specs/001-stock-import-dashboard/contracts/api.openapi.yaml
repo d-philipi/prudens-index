@@ -1,0 +1,250 @@
+openapi: 3.1.0
+info:
+  title: Prudens Index API
+  version: 0.1.0
+  description: Base feature — stock import & client dashboard
+
+servers:
+  - url: http://localhost:3001
+    description: Local API
+  - url: https://api.prudens-index.example
+    description: Production (Coolify)
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Clerk session JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object }
+
+    ImportJob:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        companyId: { type: string, format: uuid }
+        status: { enum: [queued, processing, completed, failed] }
+        originalFilename: { type: string }
+        rowCount: { type: integer, nullable: true }
+        errorMessage: { type: string, nullable: true }
+        isActive: { type: boolean }
+        queuedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
+
+    StockProduct:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        productName: { type: string }
+        ean: { type: string, nullable: true }
+        branchesWithStock: { type: array, items: { type: string } }
+        distribution: { type: number, nullable: true }
+        branchesWithDemand: { type: array, items: { type: string } }
+        demandVsDistribution: { type: number, nullable: true }
+        idd: { type: number, nullable: true }
+        stock: { type: number, nullable: true }
+        avgDemand: { type: number, nullable: true }
+        stockDays: { type: number, nullable: true }
+        itemStatus: { enum: [critical, attention, adequate, excess] }
+        category: { type: string }
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalProducts: { type: integer }
+        criticalCount: { type: integer }
+        attentionCount: { type: integer }
+        adequateCount: { type: integer }
+        excessCount: { type: integer }
+        avgStockDays: { type: number }
+        activeImportJobId: { type: string, format: uuid, nullable: true }
+
+    BranchDistributionPoint:
+      type: object
+      properties:
+        branch: { type: string }
+        productCount: { type: integer }
+        totalDistribution: { type: number }
+
+paths:
+  /health:
+    get:
+      security: []
+      responses:
+        '200':
+          description: OK
+
+  /api/admin/companies:
+    get:
+      summary: List companies (admin)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string, format: uuid }
+                    name: { type: string }
+                    slug: { type: string }
+
+  /api/admin/imports:
+    post:
+      summary: Register upload and enqueue processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [companyId, filename, contentType, sizeBytes]
+              properties:
+                companyId: { type: string, format: uuid }
+                filename: { type: string }
+                contentType:
+                  enum:
+                    - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+                    - text/csv
+                sizeBytes: { type: integer, maximum: 10485760 }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  importJobId: { type: string, format: uuid }
+                  uploadUrl: { type: string, description: R2 presigned PUT URL }
+                  uploadHeaders: { type: object }
+        '400': { description: Validation error }
+        '409': { description: Import already processing for company }
+
+  /api/admin/imports/{importJobId}/complete-upload:
+    post:
+      summary: Confirm file uploaded to R2; queue worker job
+      parameters:
+        - name: importJobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '202': { description: Queued }
+        '404': { description: Not found }
+
+  /api/admin/imports/{importJobId}:
+    get:
+      summary: Get import job status
+      parameters:
+        - name: importJobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+
+  /api/admin/companies/{companyId}/imports:
+    get:
+      summary: List imports for company (admin)
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportJob'
+
+  /api/client/dashboard/summary:
+    get:
+      summary: Dashboard KPI cards (tenant-scoped)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+
+  /api/client/dashboard/products:
+    get:
+      summary: Active snapshot products (max 5000)
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 5000, maximum: 5000 }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockProduct'
+                  total: { type: integer }
+
+  /api/client/dashboard/branch-distribution:
+    get:
+      summary: Chart data — distribution by branch
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BranchDistributionPoint'
+
+  /api/client/dashboard/export-pdf:
+    post:
+      summary: Export filtered dashboard as PDF
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productIds, filters]
+              properties:
+                productIds:
+                  type: array
+                  items: { type: string, format: uuid }
+                filters:
+                  type: object
+                  properties:
+                    branches: { type: array, items: { type: string } }
+                    categories: { type: array, items: { type: string } }
+                    itemStatuses:
+                      type: array
+                      items:
+                        enum: [critical, attention, adequate, excess]
+      responses:
+        '200':
+          description: PDF binary
+          content:
+            application/pdf: {}

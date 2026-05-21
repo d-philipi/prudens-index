@@ -1,0 +1,36 @@
+﻿---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+# index Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-05-19
+
+## Active Technologies
+
+- TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS + Fastify, Drizzle, BullMQ, SheetJS, Zod, Shadcn/UI, Tailwind v4, Recharts, react-dropzone, Clerk, Zustand (001-stock-import-dashboard)
+
+## Project Structure
+
+```text
+backend/
+frontend/
+tests/
+```
+
+## Commands
+
+npm test; npm run lint
+
+## Code Style
+
+TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS: Follow standard conventions
+
+## Recent Changes
+
+- 001-stock-import-dashboard: Added TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS + Fastify, Drizzle, BullMQ, SheetJS, Zod, Shadcn/UI, Tailwind v4, Recharts, react-dropzone, Clerk, Zustand
+
+<!-- MANUAL ADDITIONS START -->
+- UI: `cursor: pointer` em controles clicáveis via `apps/web/src/app/globals.css`; ver `.cursor/rules/ui-interaction.mdc`
+<!-- MANUAL ADDITIONS END -->

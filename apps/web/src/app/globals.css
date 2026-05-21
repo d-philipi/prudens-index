@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+@layer base {
+  a[href],
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  label:has(input[type='checkbox']),
+  label:has(input[type='radio']),
+  label:has(input[type='file']),
+  label[for],
+  select:not(:disabled),
+  summary,
+  input[type='button']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='reset']:not(:disabled),
+  input[type='file']:not(:disabled),
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
