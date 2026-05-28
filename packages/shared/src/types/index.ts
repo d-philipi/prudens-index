@@ -132,3 +132,34 @@ export interface ClientProductFiltersDto {
   term?: string;
   itemStatuses: ItemStatus[];
 }
+
+export type AdminUserKind = 'user' | 'invitation';
+
+export type AdminUserStatus = 'active' | 'pending';
+
+export interface AdminUserListItemDto {
+  id: string;
+  kind: AdminUserKind;
+  email: string;
+  role: UserRole | null;
+  companyId: string | null;
+  companyName: string | null;
+  status: AdminUserStatus;
+}
+
+export interface InviteUserRequest {
+  email: string;
+  role: UserRole;
+  companyId?: string | null;
+}
+
+export interface UpdateUserRequest {
+  role: UserRole;
+  companyId?: string | null;
+}
+
+export interface InviteUserResponse {
+  invitationId: string;
+  email: string;
+  status: string;
+}

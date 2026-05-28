@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Prudens Index API — Admin Users & Clerk Invites
+  version: 0.1.0
+  description: Contratos da spec 005 para gestão de usuários (convite, listagem, edição).
+paths:
+  /api/admin/users:
+    get:
+      summary: Lista usuários e convites pendentes
+      tags: [Admin Users]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista agregada
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminUserListItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Envia convite para novo usuário
+      tags: [Admin Users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteUserRequest'
+      responses:
+        '201':
+          description: Convite criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: E-mail já cadastrado ou convite pendente duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/admin/users/{id}:
+    patch:
+      summary: Atualiza perfil (metadata) de usuário ou convite pendente
+      tags: [Admin Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Clerk user id (user_…) ou invitation id (inv_…) conforme listagem
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Usuário ou convite atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserListItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    InviteUserRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, client]
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+    UpdateUserRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [admin, client]
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+    InviteUserResponse:
+      type: object
+      properties:
+        invitationId:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+          example: pending
+    AdminUserListItem:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [user, invitation]
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, client]
+          nullable: true
+        companyId:
+          type: string
+          format: uuid
+          nullable: true
+        companyName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, pending]
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  responses:
+    Unauthorized:
+      description: Não autenticado
+    Forbidden:
+      description: Sem permissão de admin
+    BadRequest:
+      description: Payload inválido
+    NotFound:
+      description: Usuário ou convite não encontrado

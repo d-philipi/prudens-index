@@ -4,6 +4,7 @@ import Fastify from 'fastify';
 import { authPlugin } from './plugins/auth.js';
 import { corsPlugin } from './plugins/cors.js';
 import { rateLimitPlugin } from './plugins/rate-limit.js';
+import { adminUsersRoutes } from './routes/admin-users.js';
 import { adminCompaniesRoutes } from './routes/admin-companies.js';
 import { adminImportsRoutes } from './routes/admin-imports.js';
 import { adminMetricsRoutes } from './routes/admin-metrics.js';
@@ -28,6 +29,7 @@ app.get('/health', async () => ({ ok: true }));
 
 await app.register(rateLimitPlugin);
 await app.register(adminMetricsRoutes);
+await app.register(adminUsersRoutes);
 await app.register(adminCompaniesRoutes);
 await app.register(adminImportsRoutes);
 await app.register(clientOverviewRoutes);
