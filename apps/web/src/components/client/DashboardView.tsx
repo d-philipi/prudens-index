@@ -103,8 +103,8 @@ export function DashboardView({ initialOverview, initialProducts }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row">
-      <div className="flex flex-1 flex-col gap-6">
+    <div className="flex flex-col gap-3 overflow-x-hidden lg:flex-row lg:gap-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-x-hidden lg:gap-4">
         <IndexHeader overview={displayOverview} />
         {loading && (
           <p className="text-xs text-slate-500">{strings.client.updatingProducts}</p>

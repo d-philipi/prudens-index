@@ -42,6 +42,12 @@ async function shouldRun(file: string): Promise<boolean> {
   if (file === '0002_import_validation_errors.sql') {
     return !(await columnExists('import_jobs', 'validation_errors'));
   }
+  if (file === '0003_company_cadastro.sql') {
+    return !(await columnExists('companies', 'cnpj'));
+  }
+  if (file === '0004_stock_products_financial.sql') {
+    return !(await columnExists('stock_products', 'unit_price'));
+  }
   return true;
 }
 

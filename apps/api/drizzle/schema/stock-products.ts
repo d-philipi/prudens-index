@@ -20,6 +20,10 @@ export const stockProducts = pgTable('stock_products', {
   stock: integer('stock'),
   averageDemand: numeric('average_demand', { precision: 12, scale: 4 }),
   stockDays: numeric('stock_days', { precision: 12, scale: 4 }),
+  unitPrice: numeric('unit_price', { precision: 12, scale: 4 }),
+  projectedRevenue: integer('projected_revenue'),
+  tiedUpCapital: integer('tied_up_capital'),
+  lostRevenue: integer('lost_revenue'),
   itemStatus: text('item_status').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

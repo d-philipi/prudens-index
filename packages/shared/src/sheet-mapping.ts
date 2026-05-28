@@ -9,6 +9,7 @@ export const SHEET_COLUMN_MAPPING = {
   estoque: { field: 'stock', type: 'int' as const },
   'demanda media': { field: 'average_demand', type: 'float' as const },
   'dias estoque': { field: 'stock_days', type: 'float' as const },
+  'Valor Unitário': { field: 'unit_price', type: 'float' as const },
 } as const;
 
 export type SheetColumnHeader = keyof typeof SHEET_COLUMN_MAPPING;

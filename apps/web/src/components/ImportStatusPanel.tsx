@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { apiFetch } from '@/lib/apiClient';
 import type { ImportJobDto, ImportValidationError } from '@prudens/shared/types';
+import { MissingColumnsNotice } from './admin/MissingColumnsNotice';
 import { ValidationErrorList } from './admin/ValidationErrorList';
 import { strings } from '@/lib/strings';
 
@@ -61,8 +62,19 @@ export function ImportStatusPanel({ importJobId, companyId }: Props) {
         <span className="font-medium">{strings.common.status}:</span> {statusLabel}
       </p>
       {job.rowCount != null && <p>Linhas: {job.rowCount}</p>}
-      {job.errorMessage && <p className="text-red-600">{job.errorMessage}</p>}
-      {errors.length > 0 && <ValidationErrorList errors={errors} />}
+      {job.errorMessage && (
+        <p
+          className={
+            job.status === 'completed' && job.errorMessage.includes('Colunas ausentes')
+              ? 'text-amber-800'
+              : 'text-red-600'
+          }
+        >
+          {job.errorMessage}
+        </p>
+      )}
+      <MissingColumnsNotice warnings={errors.filter((e) => e.row_number === 0)} />
+      <ValidationErrorList errors={errors} />
       {job.status === 'completed' && (
         <p className="mt-2 text-green-700">Dados disponíveis no painel do cliente.</p>
       )}

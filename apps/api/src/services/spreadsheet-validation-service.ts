@@ -33,11 +33,15 @@ export const spreadsheetValidationService = {
     return { ok: true };
   },
 
-  validateHeaders(headers: string[]): { ok: true } | { ok: false; code: string; message: string } {
+  validateHeaders(
+    headers: string[],
+  ):
+    | { ok: true; missingColumns: string[] }
+    | { ok: false; code: string; message: string } {
     const result = validateSpreadsheetHeaders(headers);
     if (!result.valid) {
       return { ok: false, code: 'INVALID_STRUCTURE', message: result.error ?? 'Invalid headers' };
     }
-    return { ok: true };
+    return { ok: true, missingColumns: result.missingColumns };
   },
 };

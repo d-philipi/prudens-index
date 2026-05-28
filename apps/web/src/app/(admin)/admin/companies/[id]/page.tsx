@@ -80,12 +80,15 @@ export default async function AdminCompanyDetailPage({ params }: PageProps) {
         )}
       </section>
       <section>
-        <h2 className="mb-3 font-medium">Histórico de importações</h2>
-        <p className="mb-2 text-sm text-slate-600">
-          <Link href={`/admin/companies/${detail.company.id}/imports`} className="underline">
-            Ver importações
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-medium">Histórico de importações</h2>
+          <Link
+            href={`/admin/imports?company=${detail.company.id}`}
+            className="text-sm text-slate-600 underline"
+          >
+            {strings.admin.importSpreadsheetForCompany}
           </Link>
-        </p>
+        </div>
         <ul className="divide-y rounded-lg border bg-white">
           {detail.imports.map((job) => (
             <li key={job.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">

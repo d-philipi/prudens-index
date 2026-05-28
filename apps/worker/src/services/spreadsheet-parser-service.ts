@@ -1,6 +1,8 @@
 import * as XLSX from 'xlsx';
 import {
+  getSpreadsheetCell,
   mapRawRow,
+  missingColumnWarnings,
   spreadsheetRowSchema,
   validateSpreadsheetHeaders,
 } from '@prudens/shared/spreadsheetTemplate';
@@ -19,6 +21,7 @@ export interface ParsedProductRow {
   stock: string | null;
   averageDemand: string | null;
   stockDays: string | null;
+  unitPrice: number | null;
   itemStatus: ItemStatus;
 }
 
@@ -33,6 +36,7 @@ export interface LineParseError {
 export interface ParseSpreadsheetResult {
   products: ParsedProductRow[];
   lineErrors: LineParseError[];
+  missingColumns: string[];
 }
 
 function toNumericString(v: number | null | undefined): string | null {
@@ -64,7 +68,7 @@ function toValidationErrors(
     const header = FIELD_TO_HEADER[field] ?? 'Coluna desconhecida';
     const mapping = SHEET_COLUMN_MAPPING[header as keyof typeof SHEET_COLUMN_MAPPING];
     const expected = mapping ? toExpected(mapping.type) : null;
-    const rawReceived = row[header];
+    const rawReceived = getSpreadsheetCell(row, header);
     const received =
       rawReceived == null || String(rawReceived).trim() === '' ? '(vazio)' : String(rawReceived);
 
@@ -97,8 +101,10 @@ export const spreadsheetParserService = {
       throw new Error(headerCheck.error ?? 'INVALID_STRUCTURE');
     }
 
+    const columnWarnings = missingColumnWarnings(headerCheck.missingColumns);
+
     const products: ParsedProductRow[] = [];
-    const lineErrors: LineParseError[] = [];
+    const lineErrors: LineParseError[] = [...columnWarnings];
 
     for (let i = 0; i < rows.length; i++) {
       const line = i + 2;
@@ -121,7 +127,7 @@ export const spreadsheetParserService = {
           column_name: 'IDD',
           error_message: 'IDD obrigatório. Informe um número decimal válido.',
           expected_value: 'Número decimal',
-          received_value: String(row.IDD ?? '(vazio)'),
+          received_value: String(getSpreadsheetCell(row, 'IDD') ?? '(vazio)'),
         });
         continue;
       }
@@ -135,7 +141,7 @@ export const spreadsheetParserService = {
           column_name: 'IDD',
           error_message: 'IDD inválido. Informe um número decimal válido.',
           expected_value: 'Número decimal',
-          received_value: String(row.IDD ?? '(vazio)'),
+          received_value: String(getSpreadsheetCell(row, 'IDD') ?? '(vazio)'),
         });
         continue;
       }
@@ -151,12 +157,20 @@ export const spreadsheetParserService = {
         stock: toNumericString(parsed.data.stock),
         averageDemand: toNumericString(parsed.data.average_demand),
         stockDays: toNumericString(parsed.data.stock_days),
+        unitPrice:
+          parsed.data.unit_price != null && parsed.data.unit_price > 0
+            ? parsed.data.unit_price
+            : null,
         itemStatus,
       });
 
       if (products.length > 5000) break;
     }
 
-    return { products, lineErrors };
+    return {
+      products,
+      lineErrors,
+      missingColumns: headerCheck.missingColumns,
+    };
   },
 };

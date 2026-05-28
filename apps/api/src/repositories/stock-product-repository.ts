@@ -35,6 +35,10 @@ const SORT_COLUMNS = {
   stock: stockProducts.stock,
   average_demand: stockProducts.averageDemand,
   stock_days: stockProducts.stockDays,
+  unit_price: stockProducts.unitPrice,
+  projected_revenue: stockProducts.projectedRevenue,
+  tied_up_capital: stockProducts.tiedUpCapital,
+  lost_revenue: stockProducts.lostRevenue,
   item_status: stockProducts.itemStatus,
 } as const;
 

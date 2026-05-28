@@ -14,13 +14,19 @@ import { strings } from '@/lib/strings';
 
 interface Props {
   companies: CompanyDto[];
+  companyId: string;
+  onCompanyChange: (companyId: string) => void;
   onUploadStarted: (importJobId: string) => void;
 }
 
-export function ImportUploadForm({ companies, onUploadStarted }: Props) {
+export function ImportUploadForm({
+  companies,
+  companyId,
+  onCompanyChange,
+  onUploadStarted,
+}: Props) {
   const { getToken } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [companyId, setCompanyId] = useState(companies[0]?.id ?? '');
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
@@ -127,7 +133,7 @@ export function ImportUploadForm({ companies, onUploadStarted }: Props) {
         <select
           className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm"
           value={companyId}
-          onChange={(e) => setCompanyId(e.target.value)}
+          onChange={(e) => onCompanyChange(e.target.value)}
         >
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
