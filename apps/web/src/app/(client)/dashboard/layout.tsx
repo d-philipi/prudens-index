@@ -1,13 +1,14 @@
-import { AuthSignOutButton } from '@/components/AuthSignOutButton';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { AppShellWrapper } from '@/components/layout/AppShellWrapper';
+import { parseRoleFromSessionClaims } from '@/lib/clerkRoles';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mx-auto w-full max-w-[1600px] px-3 py-4 md:px-4 md:py-6">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <h1 className="text-lg font-semibold text-slate-900">Prudens Index</h1>
-        <AuthSignOutButton variant="compact" />
-      </header>
-      {children}
-    </div>
-  );
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { userId, sessionClaims } = await auth();
+  if (!userId) redirect('/sign-in');
+
+  const role = parseRoleFromSessionClaims(sessionClaims as Record<string, unknown> | null);
+  if (role !== 'client') redirect('/acesso-pendente');
+
+  return <AppShellWrapper role="client">{children}</AppShellWrapper>;
 }

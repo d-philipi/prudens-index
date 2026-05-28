@@ -1,4 +1,5 @@
 import type { AdminCompanyDetailDto } from '@prudens/shared/types';
+import { iddTableColor } from '@/lib/idd-display';
 
 interface Props {
   detail: AdminCompanyDetailDto;
@@ -15,13 +16,13 @@ export function CompanyOverview({ detail }: Props) {
     company.address || company.neighborhood || company.city || company.state;
 
   return (
-    <section className="rounded-lg border bg-white p-4">
-      <h2 className="text-lg font-semibold">{company.name}</h2>
-      <p className="mt-1 text-sm text-slate-600">
+    <section className="rounded-lg border border-border-default bg-surface-card p-4">
+      <h2 className="text-lg font-semibold text-brand">{company.name}</h2>
+      <p className="mt-1 text-sm text-text-subtitle">
         Cadastro: {new Date(company.createdAt).toLocaleDateString('pt-BR')} · slug: {company.slug}
       </p>
       {(company.cnpj || hasAddress) && (
-        <div className="mt-3 space-y-1 text-sm text-slate-700">
+        <div className="mt-3 space-y-1 text-sm text-text-subtitle">
           {company.cnpj && <p>CNPJ: {formatCnpjDisplay(company.cnpj)}</p>}
           {company.address && <p>Endereço: {company.address}</p>}
           {(company.neighborhood || company.city || company.state) && (
@@ -33,7 +34,12 @@ export function CompanyOverview({ detail }: Props) {
       )}
       <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
         <p>Total de produtos: {stats.totalProducts}</p>
-        <p>IDD médio: {stats.avgIdd == null ? '—' : `${stats.avgIdd.toFixed(2)}%`}</p>
+        <p>
+          IDD médio:{' '}
+          <span className="font-mono tabular-nums" style={{ color: iddTableColor(stats.avgIdd) }}>
+            {stats.avgIdd == null ? '—' : `${stats.avgIdd.toFixed(2)}%`}
+          </span>
+        </p>
         <p>
           Última atualização:{' '}
           {stats.lastUpdatedAt ? new Date(stats.lastUpdatedAt).toLocaleString('pt-BR') : '—'}

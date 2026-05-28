@@ -1,32 +1,39 @@
 import type { AdminMetricsDto } from '@prudens/shared/types';
+import { iddTableColor } from '@/lib/idd-display';
 
 interface Props {
   metrics: AdminMetricsDto;
 }
 
+const cardClass =
+  'rounded-lg border border-border-default bg-surface-page p-4';
+
 export function MetricsPanel({ metrics }: Props) {
   return (
     <section className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Empresas cadastradas</p>
-          <p className="text-2xl font-semibold">{metrics.totalCompanies}</p>
+        <div className={cardClass}>
+          <p className="text-sm text-text-subtitle">Empresas cadastradas</p>
+          <p className="text-2xl font-semibold text-brand">{metrics.totalCompanies}</p>
         </div>
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Produtos (importação ativa)</p>
-          <p className="text-2xl font-semibold">{metrics.totalProducts}</p>
+        <div className={cardClass}>
+          <p className="text-sm text-text-subtitle">Produtos (importação ativa)</p>
+          <p className="text-2xl font-semibold text-brand">{metrics.totalProducts}</p>
         </div>
       </div>
-      <div className="rounded-lg border bg-white p-4 shadow-sm">
-        <p className="mb-3 text-sm font-medium text-slate-700">IDD médio por empresa</p>
+      <div className={cardClass}>
+        <p className="mb-3 text-sm font-medium text-brand">IDD médio por empresa</p>
         {metrics.avgIddByCompany.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhuma empresa com dados ativos.</p>
+          <p className="text-sm text-text-subtitle">Nenhuma empresa com dados ativos.</p>
         ) : (
-          <ul className="max-h-48 divide-y overflow-y-auto text-sm">
+          <ul className="max-h-48 divide-y divide-border-default overflow-y-auto text-sm">
             {metrics.avgIddByCompany.map((row) => (
               <li key={row.companyId} className="flex justify-between py-2">
                 <span>{row.companyName}</span>
-                <span className="font-medium tabular-nums">
+                <span
+                  className="font-mono font-medium tabular-nums"
+                  style={{ color: iddTableColor(row.avgIdd) }}
+                >
                   {row.avgIdd != null ? row.avgIdd.toFixed(2) : '—'}
                 </span>
               </li>

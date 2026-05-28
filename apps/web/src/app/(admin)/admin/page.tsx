@@ -32,11 +32,11 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Link
           href="/admin/companies/new"
-          className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+          className="rounded border border-brand bg-brand px-4 py-2 text-sm font-medium text-white"
         >
           {strings.admin.newCompany}
         </Link>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-text-subtitle">
           <Link href="/admin/imports" className="underline">
             {strings.admin.uploadSpreadsheet}
           </Link>
@@ -52,7 +52,7 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
           ))}
         </div>
         {companies.length === 0 && (
-          <p className="text-sm text-slate-500">Nenhuma empresa encontrada.</p>
+          <p className="text-sm text-text-subtitle">Nenhuma empresa encontrada.</p>
         )}
       </section>
     </div>

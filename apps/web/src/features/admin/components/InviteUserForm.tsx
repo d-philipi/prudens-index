@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { apiFetch } from '@/lib/apiClient';
 import { strings } from '@/lib/strings';
 import type { AdminCompanyCardDto, InviteUserResponse } from '@prudens/shared/types';
+import { SelectField } from '@/components/shared/SelectField';
 import { inviteUserSchema } from '../schemas/user-schemas';
 
 interface InviteUserFormProps {
@@ -70,8 +71,8 @@ export function InviteUserForm({ companies, onSuccess }: InviteUserFormProps) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h3 className="text-sm font-semibold text-slate-800">Convidar usuário</h3>
+    <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-border-default bg-surface-page p-4">
+      <h3 className="text-sm font-semibold text-brand">Convidar usuário</h3>
 
       {bannerError && (
         <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
@@ -86,7 +87,7 @@ export function InviteUserForm({ companies, onSuccess }: InviteUserFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-700">{strings.admin.userEmail}</span>
+          <span className="mb-1 block font-medium text-brand">{strings.admin.userEmail}</span>
           <input
             type="email"
             value={email}
@@ -94,56 +95,45 @@ export function InviteUserForm({ companies, onSuccess }: InviteUserFormProps) {
               setEmail(e.target.value);
               setFieldErrors((f) => ({ ...f, email: '' }));
             }}
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded border border-border-default px-3 py-2 text-sm"
             autoComplete="email"
           />
           {fieldErrors.email && <span className="mt-1 block text-xs text-red-600">{fieldErrors.email}</span>}
         </label>
 
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium text-slate-700">{strings.admin.userRole}</span>
-          <select
-            value={role}
-            onChange={(e) => {
-              setRole(e.target.value as 'admin' | 'client');
-              setFieldErrors((f) => ({ ...f, companyId: '' }));
-            }}
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="admin">{strings.admin.roleAdmin}</option>
-            <option value="client">{strings.admin.roleClient}</option>
-          </select>
-        </label>
+        <SelectField
+          label={strings.admin.userRole}
+          value={role}
+          onChange={(v) => {
+            setRole(v as 'admin' | 'client');
+            setFieldErrors((f) => ({ ...f, companyId: '' }));
+          }}
+          options={[
+            { value: 'admin', label: strings.admin.roleAdmin },
+            { value: 'client', label: strings.admin.roleClient },
+          ]}
+        />
 
         {role === 'client' && (
-          <label className="block text-sm sm:col-span-2">
-            <span className="mb-1 block font-medium text-slate-700">{strings.admin.userCompany}</span>
-            <select
-              value={companyId}
-              onChange={(e) => {
-                setCompanyId(e.target.value);
-                setFieldErrors((f) => ({ ...f, companyId: '' }));
-              }}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="">Selecione uma empresa</option>
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.companyId && (
-              <span className="mt-1 block text-xs text-red-600">{fieldErrors.companyId}</span>
-            )}
-          </label>
+          <SelectField
+            className="sm:col-span-2"
+            label={strings.admin.userCompany}
+            value={companyId}
+            placeholder="Selecione uma empresa"
+            onChange={(v) => {
+              setCompanyId(v);
+              setFieldErrors((f) => ({ ...f, companyId: '' }));
+            }}
+            options={companies.map((c) => ({ value: c.id, label: c.name }))}
+            error={fieldErrors.companyId}
+          />
         )}
       </div>
 
       <button
         type="submit"
         disabled={submitting}
-        className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
       >
         {submitting ? strings.admin.invitingUser : strings.admin.inviteUser}
       </button>

@@ -1,0 +1,129 @@
+# UI Design Contract — Prudens Index Workspace (007)
+# Consumed by apps/web implementation and visual QA checklist.
+
+version: "1.0.0"
+feature: "007-workspace-design-system"
+
+brand:
+  logo:
+    text: 'Prudens/INDEX'
+    parts:
+      - content: "Prudens/"
+        weight: 400
+        colorOnDark: "#ffffff"
+        colorOnLight: "#1a4731"
+      - content: "IN"
+        weight: 700
+        colorOnDark: "#ffffff"
+        colorOnLight: "#1a4731"
+      - content: "DEX"
+        weight: 700
+        color: "#d4a020" # always accent
+    fontFamily: "Plus Jakarta Sans"
+
+colors:
+  primary: "#1a4731"
+  accent: "#d4a020"
+  status:
+    distribution: "#e84040"
+    adequate: "#16a34a"
+    boost: "#f59e0b"
+  surface:
+    page: "#f5f5f3"
+    card: "#ffffff"
+  border: "#e2e2de"
+  text:
+    subtitle: "#6b7280"
+  idd:
+    hero:
+      negative: "#f87878"
+      positive: "#86efac"
+    table:
+      negative: "#e84040"
+      range0to20: "#16a34a"
+      above20: "#f59e0b"
+
+typography:
+  display:
+    family: "Plus Jakarta Sans"
+    weights: [700]
+    uses: [logo, pageTitles]
+  body:
+    family: "Inter"
+    weights: [400, 500]
+    uses: [body, labels, controls]
+  mono:
+    family: "JetBrains Mono"
+    weight: 400
+    uses: [tableNumbers, idd, percent, currency, ean]
+  pageTitle:
+    family: "Plus Jakarta Sans"
+    sizePx: 18
+    weight: 500
+  pageSubtitle:
+    family: "Inter"
+    sizePx: 13
+    color: "#6b7280"
+
+layout:
+  contentMaxWidthPx: 1280
+  desktopMinWidthPx: 1280
+  mobileMaxWidthPx: 767
+  sidebar:
+    expandedWidthPx: 220
+    collapsedWidthPx: 64
+    background: "#1a4731"
+    transitionMs: 200
+    activeItem:
+      background: "rgba(255,255,255,0.1)"
+      text: "#ffffff"
+      borderLeftPx: 3
+      borderColor: "#d4a020"
+    inactiveItem:
+      text: "rgba(255,255,255,0.65)"
+      hoverText: "rgba(255,255,255,0.85)"
+  pageHeader:
+    gapToContentPx: 24
+    separator: none
+  table:
+    rowHeightPx: 40
+    fontSizePx: 12
+    header: sticky
+
+restrictions:
+  shadows: forbidden
+  decorativeGradients: forbidden
+  darkMode: forbidden
+
+authEntry:
+  route: "/sign-in"
+  profiles:
+    admin:
+      label: "Administrador"
+      activeBackground: "#1a4731"
+      activeText: "#ffffff"
+      inactiveBorder: "#e2e2de"
+    client:
+      label: "Cliente"
+      activeBackground: "#d4a020"
+      activeText: "#1a4731"
+      inactiveBorder: "#e2e2de"
+  rules:
+    showSignUpLink: false
+    showOAuth: false
+    signUpRouteInviteOnly: "/sign-up"
+
+navigation:
+  items:
+    - id: dashboard
+      label: Dashboard
+    - id: products
+      label: Produtos
+    - id: companies
+      label: Empresas
+    - id: users
+      label: Usuários
+    - id: imports
+      label: Importações
+  persistence:
+    sidebarCollapsedKey: "prudens.sidebar.collapsed"

@@ -1,18 +1,10 @@
-import { SignIn } from '@clerk/nextjs';
-
-const authAppearance = {
-  elements: {
-    socialButtonsBlockButton: 'hidden',
-    socialButtonsBlockButtonText: 'hidden',
-    dividerRow: 'hidden',
-    footerActionLink: 'hidden',
-  },
-};
+import { SignInEntry } from '@/components/auth/SignInEntry';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 export default function SignInPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <SignIn routing="path" path="/sign-in" appearance={authAppearance} />
-    </main>
+    <AuthLayout>
+      <SignInEntry />
+    </AuthLayout>
   );
 }

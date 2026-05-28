@@ -4,8 +4,10 @@ import {
   count,
   desc,
   eq,
+  gte,
   ilike,
   inArray,
+  lte,
   or,
   sql,
   type SQL,
@@ -19,6 +21,12 @@ export interface ProductQueryParams {
   importJobId: string;
   term?: string;
   itemStatuses?: ItemStatus[];
+  iddMin?: number;
+  iddMax?: number;
+  stockDaysMin?: number;
+  stockDaysMax?: number;
+  tiedUpCapitalMin?: number;
+  tiedUpCapitalMax?: number;
   sort?: string;
   order?: 'asc' | 'desc';
   page?: number;
@@ -57,6 +65,24 @@ function buildWhere(params: ProductQueryParams, extra?: SQL): SQL {
   }
   if (params.itemStatuses && params.itemStatuses.length > 0) {
     parts.push(inArray(stockProducts.itemStatus, params.itemStatuses));
+  }
+  if (params.iddMin != null) {
+    parts.push(gte(stockProducts.idd, String(params.iddMin)));
+  }
+  if (params.iddMax != null) {
+    parts.push(lte(stockProducts.idd, String(params.iddMax)));
+  }
+  if (params.stockDaysMin != null) {
+    parts.push(gte(stockProducts.stockDays, String(params.stockDaysMin)));
+  }
+  if (params.stockDaysMax != null) {
+    parts.push(lte(stockProducts.stockDays, String(params.stockDaysMax)));
+  }
+  if (params.tiedUpCapitalMin != null) {
+    parts.push(gte(stockProducts.tiedUpCapital, params.tiedUpCapitalMin));
+  }
+  if (params.tiedUpCapitalMax != null) {
+    parts.push(lte(stockProducts.tiedUpCapital, params.tiedUpCapitalMax));
   }
   if (extra) parts.push(extra);
   return and(...parts)!;

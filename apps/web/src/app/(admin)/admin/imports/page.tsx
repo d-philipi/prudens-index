@@ -92,7 +92,7 @@ function AdminImportsPageContent() {
         />
       ) : (
         !loadError && (
-          <p className="text-sm text-slate-600">{strings.admin.noCompanies}</p>
+          <p className="text-sm text-text-subtitle">{strings.admin.noCompanies}</p>
         )
       )}
       <ImportStatusPanel importJobId={importJobId} companyId={selectedCompany || null} />
@@ -101,11 +101,11 @@ function AdminImportsPageContent() {
           <h3 className="mb-2 font-medium">
             {strings.admin.importHistory}
             {selectedCompanyName ? (
-              <span className="font-normal text-slate-600"> — {selectedCompanyName}</span>
+              <span className="font-normal text-text-subtitle"> — {selectedCompanyName}</span>
             ) : null}
           </h3>
           {historyLoading ? (
-            <p className="text-sm text-slate-500">{strings.common.loading}</p>
+            <p className="text-sm text-text-subtitle">{strings.common.loading}</p>
           ) : history.length > 0 ? (
             <ul className="space-y-1 text-sm">
               {history.map((j) => (
@@ -118,7 +118,7 @@ function AdminImportsPageContent() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">{strings.admin.noImportsForCompany}</p>
+            <p className="text-sm text-text-subtitle">{strings.admin.noImportsForCompany}</p>
           )}
         </section>
       )}

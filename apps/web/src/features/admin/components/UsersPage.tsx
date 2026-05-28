@@ -58,8 +58,8 @@ export function UsersPage() {
       <Breadcrumb items={[{ label: strings.admin.users }]} />
 
       <header className="space-y-1">
-        <h2 className="text-lg font-semibold text-slate-900">{strings.admin.usersTitle}</h2>
-        <p className="text-sm text-slate-600">{strings.admin.usersDescription}</p>
+        <h2 className="text-lg font-semibold text-brand">{strings.admin.usersTitle}</h2>
+        <p className="text-sm text-text-subtitle">{strings.admin.usersDescription}</p>
       </header>
 
       <InviteUserForm companies={companies} onSuccess={onInviteSuccess} />
@@ -71,7 +71,7 @@ export function UsersPage() {
           </p>
         )}
 
-        {loading && <p className="text-sm text-slate-500">{strings.common.loading}</p>}
+        {loading && <p className="text-sm text-text-subtitle">{strings.common.loading}</p>}
 
         {loadError && !loading && (
           <div className="rounded border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">

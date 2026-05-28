@@ -19,21 +19,29 @@ function pagesAround(currentPage: number, totalPages: number): Array<number | '.
   return pages;
 }
 
+const navBtn =
+  'rounded border border-border-default px-2 py-1 text-sm text-brand disabled:cursor-not-allowed disabled:opacity-40';
+
 export function Pagination({ totalPages, currentPage, onPageChange }: Props) {
   if (totalPages <= 1) return null;
   const pages = pagesAround(currentPage, totalPages);
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <button type="button" onClick={() => onPageChange(1)} disabled={currentPage === 1}>
+      <button type="button" className={navBtn} onClick={() => onPageChange(1)} disabled={currentPage === 1}>
         {'<<'}
       </button>
-      <button type="button" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
+      <button
+        type="button"
+        className={navBtn}
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
         {'<'}
       </button>
       {pages.map((p, idx) =>
         p === '...' ? (
-          <span key={`ellipsis-${idx}`} className="px-1">
+          <span key={`ellipsis-${idx}`} className="px-1 text-text-subtitle">
             ...
           </span>
         ) : (
@@ -41,7 +49,8 @@ export function Pagination({ totalPages, currentPage, onPageChange }: Props) {
             key={p}
             type="button"
             onClick={() => onPageChange(p)}
-            className={p === currentPage ? 'font-bold underline' : ''}
+            className={`${navBtn} ${p === currentPage ? 'border-brand bg-brand text-white' : ''}`}
+            aria-current={p === currentPage ? 'page' : undefined}
           >
             {p}
           </button>
@@ -49,6 +58,7 @@ export function Pagination({ totalPages, currentPage, onPageChange }: Props) {
       )}
       <button
         type="button"
+        className={navBtn}
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
@@ -56,6 +66,7 @@ export function Pagination({ totalPages, currentPage, onPageChange }: Props) {
       </button>
       <button
         type="button"
+        className={navBtn}
         onClick={() => onPageChange(totalPages)}
         disabled={currentPage === totalPages}
       >

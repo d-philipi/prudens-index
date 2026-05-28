@@ -1,20 +1,15 @@
 import PDFDocument from 'pdfkit';
 import type { AuthContext } from '../types/auth-context.js';
-import type { ClientProductFiltersDto, ItemStatus } from '@prudens/shared/types';
 import { assertClient } from './auth-context-service.js';
 import { clientOverviewService } from './client-overview-service.js';
-import { clientProductsService } from './client-products-service.js';
+import { clientProductsService, type ClientProductsQuery } from './client-products-service.js';
 
 export const exportPdfService = {
-  async generate(
-    ctx: AuthContext,
-    input: { term?: string; itemStatuses: ItemStatus[] },
-  ): Promise<Buffer> {
+  async generate(ctx: AuthContext, input: ClientProductsQuery): Promise<Buffer> {
     assertClient(ctx);
     const overview = await clientOverviewService.getOverview(ctx);
     const { items } = await clientProductsService.getProducts(ctx, {
-      term: input.term,
-      item_status: input.itemStatuses.length > 0 ? input.itemStatuses : undefined,
+      ...input,
       limit: 500,
     });
 
