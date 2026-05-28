@@ -1,6 +1,62 @@
-import { and, eq } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import { db } from '../lib/db.js';
 import { stockProducts } from '../../drizzle/schema/stock-products.js';
+import type { ItemStatus } from '@prudens/shared/types';
+
+export interface ProductQueryParams {
+  companyId: string;
+  importJobId: string;
+  term?: string;
+  itemStatuses?: ItemStatus[];
+  sort?: string;
+  order?: 'asc' | 'desc';
+  page?: number;
+}
+
+const SORT_COLUMNS = {
+  product_name: stockProducts.productName,
+  ean: stockProducts.ean,
+  stores_with_stock: stockProducts.storesWithStock,
+  distribution: stockProducts.distribution,
+  branches_with_demand: stockProducts.branchesWithDemand,
+  demand_vs_distribution: stockProducts.demandVsDistribution,
+  idd: stockProducts.idd,
+  stock: stockProducts.stock,
+  average_demand: stockProducts.averageDemand,
+  stock_days: stockProducts.stockDays,
+  item_status: stockProducts.itemStatus,
+} as const;
+
+type SortColumn = (typeof SORT_COLUMNS)[keyof typeof SORT_COLUMNS];
+
+function buildWhere(params: ProductQueryParams, extra?: SQL): SQL {
+  const parts: SQL[] = [
+    eq(stockProducts.companyId, params.companyId),
+    eq(stockProducts.importJobId, params.importJobId),
+  ];
+  if (params.term?.trim()) {
+    const pattern = `%${params.term.trim()}%`;
+    parts.push(
+      or(ilike(stockProducts.productName, pattern), ilike(stockProducts.ean, pattern))!,
+    );
+  }
+  if (params.itemStatuses && params.itemStatuses.length > 0) {
+    parts.push(inArray(stockProducts.itemStatus, params.itemStatuses));
+  }
+  if (extra) parts.push(extra);
+  return and(...parts)!;
+}
 
 export const stockProductRepository = {
   async bulkInsert(rows: (typeof stockProducts.$inferInsert)[]) {
@@ -17,13 +73,58 @@ export const stockProductRepository = {
       );
   },
 
-  async findByIds(companyId: string, ids: string[]) {
-    if (ids.length === 0) return [];
-    const all = await db
+  async countFiltered(params: ProductQueryParams) {
+    const [row] = await db
+      .select({ total: count() })
+      .from(stockProducts)
+      .where(buildWhere(params));
+    return Number(row?.total ?? 0);
+  },
+
+  async findFiltered(params: ProductQueryParams, take: number, page: number) {
+    const sortKey = params.sort ?? 'idd';
+    const col: SortColumn =
+      sortKey in SORT_COLUMNS
+        ? SORT_COLUMNS[sortKey as keyof typeof SORT_COLUMNS]
+        : stockProducts.idd;
+    const isAsc = params.order === 'asc';
+    const orderCol = isAsc ? asc(col) : desc(col);
+
+    const where = buildWhere(params);
+    const offset = Math.max(page - 1, 0) * take;
+
+    return db
       .select()
       .from(stockProducts)
-      .where(eq(stockProducts.companyId, companyId));
-    const set = new Set(ids);
-    return all.filter((r) => set.has(r.id));
+      .where(where)
+      .orderBy(orderCol, desc(stockProducts.id))
+      .limit(take)
+      .offset(offset);
+  },
+
+  async chartData(params: ProductQueryParams, chartLimit = 500) {
+    return db
+      .select({
+        productName: stockProducts.productName,
+        idd: stockProducts.idd,
+        itemStatus: stockProducts.itemStatus,
+      })
+      .from(stockProducts)
+      .where(buildWhere(params))
+      .orderBy(desc(stockProducts.idd))
+      .limit(chartLimit);
+  },
+
+  async avgIddForCompany(companyId: string, importJobId: string) {
+    const [row] = await db
+      .select({
+        avg: sql<string>`avg(${stockProducts.idd}::numeric)`,
+      })
+      .from(stockProducts)
+      .where(
+        and(eq(stockProducts.companyId, companyId), eq(stockProducts.importJobId, importJobId)),
+      );
+    const n = row?.avg != null ? parseFloat(row.avg) : null;
+    return n != null && Number.isFinite(n) ? n : null;
   },
 };

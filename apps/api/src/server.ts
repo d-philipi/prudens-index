@@ -6,8 +6,10 @@ import { corsPlugin } from './plugins/cors.js';
 import { rateLimitPlugin } from './plugins/rate-limit.js';
 import { adminCompaniesRoutes } from './routes/admin-companies.js';
 import { adminImportsRoutes } from './routes/admin-imports.js';
-import { clientDashboardRoutes } from './routes/client-dashboard.js';
+import { adminMetricsRoutes } from './routes/admin-metrics.js';
 import { clientExportRoutes } from './routes/client-export.js';
+import { clientOverviewRoutes } from './routes/client-overview.js';
+import { clientProductsRoutes } from './routes/client-products.js';
 
 const app = Fastify({ logger: true });
 
@@ -25,9 +27,11 @@ await app.register(authPlugin);
 app.get('/health', async () => ({ ok: true }));
 
 await app.register(rateLimitPlugin);
+await app.register(adminMetricsRoutes);
 await app.register(adminCompaniesRoutes);
 await app.register(adminImportsRoutes);
-await app.register(clientDashboardRoutes);
+await app.register(clientOverviewRoutes);
+await app.register(clientProductsRoutes);
 await app.register(clientExportRoutes);
 
 const port = Number(process.env.PORT ?? 3001);

@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./spreadsheetTemplate": "./src/spreadsheetTemplate.ts",
     "./spreadsheetFormats": "./src/spreadsheetFormats.ts",
+    "./sheet-mapping": "./src/sheet-mapping.ts",
     "./types": "./src/types/index.ts"
   },
   "scripts": {

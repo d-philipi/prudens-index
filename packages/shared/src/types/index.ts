@@ -2,7 +2,7 @@ export type UserRole = 'admin' | 'client';
 
 export type ImportJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
-export type ItemStatus = 'critical' | 'attention' | 'adequate' | 'excess';
+export type ItemStatus = 'distribution' | 'adequate' | 'boost';
 
 export interface CompanyDto {
   id: string;
@@ -17,45 +17,88 @@ export interface ImportJobDto {
   originalFilename: string;
   rowCount: number | null;
   errorMessage: string | null;
+  validationErrors: ImportValidationError[];
   isActive: boolean;
   queuedAt: string;
   completedAt: string | null;
+}
+
+export interface ImportValidationError {
+  row_number: number;
+  column_name: string;
+  error_message: string;
+  expected_value: string | null;
+  received_value: string | null;
 }
 
 export interface StockProductDto {
   id: string;
   productName: string;
   ean: string | null;
-  branchesWithStock: string[];
+  storesWithStock: number;
   distribution: number | null;
-  branchesWithDemand: string[];
+  branchesWithDemand: number;
   demandVsDistribution: number | null;
-  idd: number | null;
+  idd: number;
   stock: number | null;
-  avgDemand: number | null;
+  averageDemand: number | null;
   stockDays: number | null;
   itemStatus: ItemStatus;
-  category: string;
 }
 
-export interface DashboardSummaryDto {
+export interface AdminMetricsDto {
+  totalCompanies: number;
   totalProducts: number;
-  criticalCount: number;
-  attentionCount: number;
-  adequateCount: number;
-  excessCount: number;
-  avgStockDays: number;
+  avgIddByCompany: Array<{
+    companyId: string;
+    companyName: string;
+    avgIdd: number | null;
+  }>;
+}
+
+export interface AdminCompanyCardDto {
+  id: string;
+  name: string;
+  slug: string;
+  productCount: number;
+  avgIdd: number | null;
+  createdAt: string;
+}
+
+export interface AdminCompanyDetailDto {
+  company: CompanyDto & { createdAt: string; metadata?: Record<string, string | number | null> | null };
+  stats: {
+    totalProducts: number;
+    avgIdd: number | null;
+    lastUpdatedAt: string | null;
+  };
+  imports: ImportJobDto[];
   activeImportJobId: string | null;
 }
 
-export interface BranchDistributionPointDto {
-  branch: string;
-  productCount: number;
-  totalDistribution: number;
+export interface ClientOverviewDto {
+  companyName: string;
+  avgIdd: number | null;
+  lastUpdatedAt: string | null;
 }
 
-export interface DashboardFiltersDto {
-  branches: string[];
-  categories: string[];
+export interface ChartDataPointDto {
+  product_name: string;
+  idd: number;
+  item_status: ItemStatus;
+}
+
+export interface ClientProductsResponseDto {
+  items: StockProductDto[];
+  nextCursor: string | null;
+  total: number;
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  chart_data: ChartDataPointDto[];
+}
+
+export interface ClientProductFiltersDto {
+  term?: string;
   itemStatuses: ItemStatus[];
 }

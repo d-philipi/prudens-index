@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+  title: Prudens Index Admin Errors API
+  version: 0.1.0
+  description: Contrato para consulta de erros estruturados de importação por job.
+paths:
+  /api/admin/companies/{id}/jobs/{jobId}/errors:
+    get:
+      summary: Lista erros estruturados de validação de planilha de um job
+      tags: [Admin Imports]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID da empresa
+        - in: path
+          name: jobId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID do job de importação
+      responses:
+        '200':
+          description: Lista de erros estruturados do job
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [job_id, company_id, errors]
+                properties:
+                  job_id:
+                    type: string
+                    format: uuid
+                  company_id:
+                    type: string
+                    format: uuid
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ImportValidationError'
+        '401':
+          description: Não autenticado
+        '403':
+          description: Usuário sem permissão de admin
+        '404':
+          description: Empresa ou job não encontrado, ou job não pertence à empresa
+components:
+  schemas:
+    ImportValidationError:
+      type: object
+      required: [row_number, column_name, error_message, expected_value, received_value]
+      properties:
+        row_number:
+          type: integer
+          minimum: 2
+          example: 81
+          description: Número da linha original na planilha
+        column_name:
+          type: string
+          example: IDD
+          description: Nome da coluna exatamente como no cabeçalho em português
+        error_message:
+          type: string
+          example: Esperado número decimal, mas recebido texto "N/A". Corrija a célula e reenvie a planilha.
+          description: Mensagem acionável em português claro
+        expected_value:
+          type: string
+          nullable: true
+          example: Número decimal
+          description: Valor/formato esperado para a célula
+        received_value:
+          type: string
+          nullable: true
+          example: N/A
+          description: Valor recebido durante o processamento

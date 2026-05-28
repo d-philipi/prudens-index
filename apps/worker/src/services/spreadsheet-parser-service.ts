@@ -4,31 +4,82 @@ import {
   spreadsheetRowSchema,
   validateSpreadsheetHeaders,
 } from '@prudens/shared/spreadsheetTemplate';
-import { parseBranchList } from '@prudens/domain-metrics';
-import { computeItemStatus } from '@prudens/domain-metrics';
+import { SHEET_COLUMN_MAPPING } from '@prudens/shared/sheet-mapping';
+import { computeItemStatusFromIdd } from '@prudens/domain-metrics';
+import type { ImportValidationError, ItemStatus } from '@prudens/shared/types';
 
 export interface ParsedProductRow {
   productName: string;
   ean: string | null;
-  branchesWithStock: string[];
+  storesWithStock: number;
   distribution: string | null;
-  branchesWithDemand: string[];
+  branchesWithDemand: number;
   demandVsDistribution: string | null;
-  idd: string | null;
+  idd: string;
   stock: string | null;
-  avgDemand: string | null;
+  averageDemand: string | null;
   stockDays: string | null;
-  itemStatus: 'critical' | 'attention' | 'adequate' | 'excess';
-  category: string;
+  itemStatus: ItemStatus;
 }
 
-function toNumericString(v: number | string | null | undefined): string | null {
-  if (v == null || v === '') return null;
+export interface LineParseError {
+  row_number: number;
+  column_name: string;
+  error_message: string;
+  expected_value: string | null;
+  received_value: string | null;
+}
+
+export interface ParseSpreadsheetResult {
+  products: ParsedProductRow[];
+  lineErrors: LineParseError[];
+}
+
+function toNumericString(v: number | null | undefined): string | null {
+  if (v == null) return null;
   return String(v);
 }
 
+const FIELD_TO_HEADER = Object.fromEntries(
+  Object.entries(SHEET_COLUMN_MAPPING).map(([header, config]) => [config.field, header]),
+) as Record<string, string>;
+
+function toExpected(type: 'string' | 'int' | 'float'): string {
+  if (type === 'int') return 'Número inteiro';
+  if (type === 'float') return 'Número decimal';
+  return 'Texto';
+}
+
+function toValidationErrors(
+  rowNumber: number,
+  issues: Array<{
+    path: Array<string | number>;
+    code: string;
+    message: string;
+  }>,
+  row: Record<string, string | number>,
+): ImportValidationError[] {
+  return issues.map((issue) => {
+    const field = String(issue.path[0] ?? '');
+    const header = FIELD_TO_HEADER[field] ?? 'Coluna desconhecida';
+    const mapping = SHEET_COLUMN_MAPPING[header as keyof typeof SHEET_COLUMN_MAPPING];
+    const expected = mapping ? toExpected(mapping.type) : null;
+    const rawReceived = row[header];
+    const received =
+      rawReceived == null || String(rawReceived).trim() === '' ? '(vazio)' : String(rawReceived);
+
+    return {
+      row_number: rowNumber,
+      column_name: header,
+      error_message: `Esperado ${expected ?? 'valor válido'}, mas recebido ${received}.`,
+      expected_value: expected,
+      received_value: received,
+    };
+  });
+}
+
 export const spreadsheetParserService = {
-  parseBuffer(buffer: Buffer, filename: string): ParsedProductRow[] {
+  parseBuffer(buffer: Buffer, _filename: string): ParseSpreadsheetResult {
     const workbook = XLSX.read(buffer, { type: 'buffer', raw: false });
     const sheet = workbook.Sheets[workbook.SheetNames[0]!];
     if (!sheet) throw new Error('EMPTY_FILE');
@@ -47,42 +98,65 @@ export const spreadsheetParserService = {
     }
 
     const products: ParsedProductRow[] = [];
+    const lineErrors: LineParseError[] = [];
 
-    for (const row of rows) {
+    for (let i = 0; i < rows.length; i++) {
+      const line = i + 2;
+      const row = rows[i]!;
       const cells: Record<string, string | number | null> = {};
       for (const h of headers) {
         cells[h] = row[h] ?? null;
       }
       const mapped = mapRawRow(cells);
       const parsed = spreadsheetRowSchema.safeParse(mapped);
-      if (!parsed.success || !mapped.product_name) continue;
+      if (!parsed.success) {
+        lineErrors.push(
+          ...toValidationErrors(line, parsed.error.issues, row),
+        );
+        continue;
+      }
+      if (parsed.data.idd == null) {
+        lineErrors.push({
+          row_number: line,
+          column_name: 'IDD',
+          error_message: 'IDD obrigatório. Informe um número decimal válido.',
+          expected_value: 'Número decimal',
+          received_value: String(row.IDD ?? '(vazio)'),
+        });
+        continue;
+      }
 
-      const stockDays = parsed.data.stock_days;
-      const idd = parsed.data.idd;
-      const itemStatus = computeItemStatus({
-        stockDays: typeof stockDays === 'number' ? stockDays : null,
-        idd: typeof idd === 'number' ? idd : null,
-      });
+      let itemStatus: ItemStatus;
+      try {
+        itemStatus = computeItemStatusFromIdd(parsed.data.idd);
+      } catch {
+        lineErrors.push({
+          row_number: line,
+          column_name: 'IDD',
+          error_message: 'IDD inválido. Informe um número decimal válido.',
+          expected_value: 'Número decimal',
+          received_value: String(row.IDD ?? '(vazio)'),
+        });
+        continue;
+      }
 
       products.push({
-        productName: mapped.product_name,
-        ean: mapped.ean ?? null,
-        branchesWithStock: parseBranchList(mapped.branches_with_stock_raw),
+        productName: parsed.data.product_name,
+        ean: parsed.data.ean ?? null,
+        storesWithStock: parsed.data.stores_with_stock,
         distribution: toNumericString(parsed.data.distribution),
-        branchesWithDemand: parseBranchList(mapped.branches_with_demand_raw),
+        branchesWithDemand: parsed.data.branches_with_demand,
         demandVsDistribution: toNumericString(parsed.data.demand_vs_distribution),
-        idd: toNumericString(parsed.data.idd),
+        idd: String(parsed.data.idd),
         stock: toNumericString(parsed.data.stock),
-        avgDemand: toNumericString(parsed.data.avg_demand),
+        averageDemand: toNumericString(parsed.data.average_demand),
         stockDays: toNumericString(parsed.data.stock_days),
         itemStatus,
-        category: 'Sem categoria',
       });
 
       if (products.length > 5000) break;
     }
 
-    if (products.length === 0) throw new Error('EMPTY_DATA');
-    return products;
+    return { products, lineErrors };
   },
 };

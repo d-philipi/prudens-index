@@ -1,59 +1,97 @@
 'use client';
 
 import { create } from 'zustand';
-import {
-  computeBranchDistribution,
-  computeDashboardSummary,
-  filterProducts,
-} from '@prudens/domain-metrics';
 import type {
-  BranchDistributionPointDto,
-  DashboardFiltersDto,
-  DashboardSummaryDto,
+  ChartDataPointDto,
+  ClientOverviewDto,
+  ClientProductsResponseDto,
+  ItemStatus,
   StockProductDto,
 } from '@prudens/shared/types';
 
 interface DashboardState {
+  overview: ClientOverviewDto | null;
   products: StockProductDto[];
-  filters: DashboardFiltersDto;
-  activeImportJobId: string | null;
+  chartData: ChartDataPointDto[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  nextCursor: string | null;
+  term: string;
+  itemStatuses: ItemStatus[];
+  sort: string;
+  order: 'asc' | 'desc';
   loaded: boolean;
-  setSnapshot: (products: StockProductDto[], activeImportJobId: string | null) => void;
-  setFilters: (filters: Partial<DashboardFiltersDto>) => void;
-  clearFilters: () => void;
+  loading: boolean;
+  setInitial: (overview: ClientOverviewDto, page: ClientProductsResponseDto) => void;
+  setFilters: (partial: { term?: string; itemStatuses?: ItemStatus[] }) => void;
+  setSort: (sort: string, order: 'asc' | 'desc') => void;
+  setPage: (page: number) => void;
+  applyProductsPage: (page: ClientProductsResponseDto) => void;
+  setLoading: (loading: boolean) => void;
 }
 
-const defaultFilters: DashboardFiltersDto = {
-  branches: [],
-  categories: [],
-  itemStatuses: [],
-};
-
-export const useDashboardStore = create<DashboardState>((set, get) => ({
+export const useDashboardStore = create<DashboardState>((set) => ({
+  overview: null,
   products: [],
-  filters: defaultFilters,
-  activeImportJobId: null,
+  chartData: [],
+  total: 0,
+  currentPage: 1,
+  totalPages: 1,
+  pageSize: 50,
+  nextCursor: null,
+  term: '',
+  itemStatuses: [],
+  sort: 'idd',
+  order: 'desc',
   loaded: false,
-  setSnapshot: (products, activeImportJobId) =>
-    set({ products, activeImportJobId, loaded: true }),
+  loading: false,
+  setInitial: (overview, page) =>
+    set({
+      overview,
+      products: page.items,
+      chartData: page.chart_data,
+      total: page.total,
+      currentPage: page.currentPage,
+      totalPages: page.totalPages,
+      pageSize: page.pageSize,
+      nextCursor: page.nextCursor,
+      loaded: true,
+      loading: false,
+    }),
   setFilters: (partial) =>
-    set((s) => ({ filters: { ...s.filters, ...partial } })),
-  clearFilters: () => set({ filters: defaultFilters }),
+    set((s) => ({
+      term: partial.term ?? s.term,
+      itemStatuses: partial.itemStatuses ?? s.itemStatuses,
+      currentPage: 1,
+      nextCursor: null,
+    })),
+  setSort: (sort, order) => set({ sort, order, currentPage: 1, nextCursor: null }),
+  setPage: (currentPage) => set({ currentPage, nextCursor: null }),
+  applyProductsPage: (page) =>
+    set({
+      products: page.items,
+      chartData: page.chart_data,
+      total: page.total,
+      currentPage: page.currentPage,
+      totalPages: page.totalPages,
+      pageSize: page.pageSize,
+      nextCursor: page.nextCursor,
+      loading: false,
+    }),
+  setLoading: (loading) => set({ loading }),
 }));
 
-export function useFilteredProducts(): StockProductDto[] {
-  const products = useDashboardStore((s) => s.products);
-  const filters = useDashboardStore((s) => s.filters);
-  return filterProducts(products, filters);
-}
-
-export function useFilteredSummary(): DashboardSummaryDto {
-  const filtered = useFilteredProducts();
-  const activeImportJobId = useDashboardStore((s) => s.activeImportJobId);
-  return computeDashboardSummary(filtered, activeImportJobId);
-}
-
-export function useFilteredBranchDistribution(): BranchDistributionPointDto[] {
-  const filtered = useFilteredProducts();
-  return computeBranchDistribution(filtered);
+export function buildProductsQuery(state: DashboardState): string {
+  const params = new URLSearchParams();
+  if (state.term.trim()) params.set('term', state.term.trim());
+  for (const s of state.itemStatuses) {
+    params.append('item_status', s);
+  }
+  params.set('sort', state.sort);
+  params.set('order', state.order);
+  params.set('limit', String(state.pageSize));
+  params.set('page', String(state.currentPage));
+  return params.toString();
 }

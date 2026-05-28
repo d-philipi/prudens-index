@@ -1,16 +1,13 @@
 <!--
 Sync Impact Report
-Version change: (template) → 1.0.0
-Modified principles: N/A (initial ratification from template placeholders)
-Added sections:
-  - Core Principles (7 principles)
-  - Technology Stack & Deployment
-  - Development Standards & Prohibitions
-  - Governance
+Version change: 1.0.0 → 1.1.0 (MINOR)
+Modified principles:
+  - I. Product & Users — operator language (pt-BR) and actionable errors
+Added sections: None
 Removed sections: None
 Templates:
-  - .specify/templates/plan-template.md ✅ updated (Constitution Check gates)
-  - .specify/templates/tasks-template.md ✅ updated (layer paths, API sequence)
+  - .specify/templates/plan-template.md ✅ updated (Constitution Check: pt-BR UI, actionable errors)
+  - .specify/templates/tasks-template.md ✅ no change required
   - .specify/templates/spec-template.md ✅ no change required (technology-agnostic)
   - .specify/templates/checklist-template.md ✅ no change required
   - .specify/templates/agent-file-template.md ✅ no change required
@@ -30,8 +27,26 @@ full desktop experience. Prudens operates the platform as admin; end customers
 product. Every feature MUST serve operational stock intelligence for those users and
 MUST remain usable on mobile viewports as the primary target.
 
+**Operator language (NON-NEGOTIABLE)**: All text shown in the product UI (labels,
+buttons, empty states, toasts, status panels, and inline help) MUST be written in
+Brazilian Portuguese (pt-BR). Messages returned by the API or worker that are
+displayed to Prudens admins or client users (for example import job summaries and
+validation feedback) MUST also be in pt-BR. Internal identifiers (enum codes, log
+fields, OpenAPI operationIds) MAY remain in English when not shown to end users.
+
+**Actionable errors (NON-NEGOTIABLE)**: When a workflow fails or partially fails
+because of user-provided data (especially spreadsheet import and uploads), feedback
+shown to operators MUST be actionable: indicate where the problem is (at minimum
+spreadsheet line; column or field when applicable), what was expected, what was
+received, and what to do next. Operator-facing surfaces MUST NOT rely on opaque
+codes alone (for example `ROW_VALIDATION` without explanation). Detailed error
+collections MAY be persisted for analysis; summaries shown in the UI MUST still be
+clear in pt-BR.
+
 **Rationale**: Product scope and audience define acceptable UX, permissions, and
-prioritization; mobile-first avoids retrofitting core flows later.
+prioritization; mobile-first avoids retrofitting core flows later. Prudens operators
+work in Portuguese; import and validation errors must be fixable without reading
+source code or English-only codes.
 
 ### II. Mandatory Technology Stack (NON-NEGOTIABLE)
 
@@ -156,8 +171,9 @@ removals or incompatible redefinitions; PATCH for clarifications only. Update de
 templates in `.specify/templates/` in the same change set.
 
 **Compliance review**: Reviewers MUST verify stack compliance, layer boundaries,
-Route→Service→Repository flow, Zod on external input, auth on protected routes, and
-naming conventions. Runtime guidance may be extended in feature `plan.md` and agent
-context files generated from plans.
+Route→Service→Repository flow, Zod on external input, auth on protected routes,
+naming conventions, pt-BR operator-facing copy, and actionable error feedback on
+data-import and validation flows. Runtime guidance may be extended in feature
+`plan.md` and agent context files generated from plans.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-19 | **Last Amended**: 2026-05-19
+**Version**: 1.1.0 | **Ratified**: 2026-05-19 | **Last Amended**: 2026-05-27

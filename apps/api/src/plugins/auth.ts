@@ -20,13 +20,13 @@ const authPluginImpl: FastifyPluginAsync = async (app) => {
 
     const header = request.headers.authorization;
     if (!header?.startsWith('Bearer ')) {
-      return reply.code(401).send({ code: 'UNAUTHORIZED', message: 'Missing token' });
+      return reply.code(401).send({ code: 'UNAUTHORIZED', message: 'Não foi possível identificar o token de autenticação' });
     }
 
     const token = header.slice(7);
     const secret = env.clerkSecretKey;
     if (!secret) {
-      return reply.code(500).send({ code: 'CONFIG', message: 'Auth not configured' });
+      return reply.code(500).send({ code: 'CONFIG', message: 'A autenticação não está configurada' });
     }
 
     try {
@@ -39,14 +39,17 @@ const authPluginImpl: FastifyPluginAsync = async (app) => {
 
       const ctx = await resolveAuthContext(clerkUserId, email);
       if (!ctx) {
-        return reply.code(403).send({ code: 'FORBIDDEN', message: 'User not provisioned' });
+        return reply.code(403).send({ code: 'FORBIDDEN', message: 'Usuário não encontrado' });
       }
       request.auth = ctx;
     } catch {
-      return reply.code(401).send({ code: 'UNAUTHORIZED', message: 'Invalid token' });
+      return reply.code(401).send({ code: 'UNAUTHORIZED', message: 'Token inválido' });
     }
   });
 };
 
-/** Breaks Fastify encapsulation so auth runs on nested route plugins (admin, client). */
+/**
+ * Breaks Fastify encapsulation so auth runs on nested route plugins (admin, client).
+ * Client routes MUST use request.auth.companyId from this context — never a client-supplied company id.
+ */
 export const authPlugin = fp(authPluginImpl, { name: 'auth-plugin' });
