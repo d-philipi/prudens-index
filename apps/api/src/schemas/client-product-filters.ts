@@ -1,0 +1,85 @@
+import { z } from 'zod';
+import type { ItemStatus } from '@prudens/shared/types';
+
+const itemStatusEnum = z.enum(['distribution', 'adequate', 'boost']);
+
+function parseItemStatuses(
+  v: string | ('distribution' | 'adequate' | 'boost') | ('distribution' | 'adequate' | 'boost')[] | undefined,
+): ItemStatus[] | undefined {
+  if (v == null) return undefined;
+  if (Array.isArray(v)) return v;
+  if (typeof v === 'string' && v.includes(',')) {
+    return v.split(',').map((s) => s.trim()) as ItemStatus[];
+  }
+  return [v as ItemStatus];
+}
+
+const filtersShape = {
+  term: z.string().optional(),
+  item_status: z
+    .union([itemStatusEnum, z.array(itemStatusEnum), z.string()])
+    .optional()
+    .transform(parseItemStatuses),
+  idd_min: z.coerce.number().min(-100).max(100).optional(),
+  idd_max: z.coerce.number().min(-100).max(100).optional(),
+  stock_days_min: z.coerce.number().min(0).max(365).optional(),
+  stock_days_max: z.coerce.number().min(0).max(365).optional(),
+  tied_up_capital_min: z.coerce.number().min(0).optional(),
+  tied_up_capital_max: z.coerce.number().min(0).optional(),
+};
+
+const RANGE_PAIRS: [string, string][] = [
+  ['idd_min', 'idd_max'],
+  ['stock_days_min', 'stock_days_max'],
+  ['tied_up_capital_min', 'tied_up_capital_max'],
+  ['iddMin', 'iddMax'],
+  ['stockDaysMin', 'stockDaysMax'],
+  ['tiedUpCapitalMin', 'tiedUpCapitalMax'],
+];
+
+const RANGE_REFINE_MESSAGE =
+  'Intervalo de filtro inválido: o valor mínimo não pode ser maior que o máximo.';
+
+function withRangeRefine<T extends z.ZodTypeAny>(schema: T) {
+  return schema.refine(
+    (data) => {
+      const d = data as Record<string, number | undefined>;
+      for (const [minKey, maxKey] of RANGE_PAIRS) {
+        const min = d[minKey];
+        const max = d[maxKey];
+        if (min != null && max != null && min > max) return false;
+      }
+      return true;
+    },
+    { message: RANGE_REFINE_MESSAGE },
+  );
+}
+
+export const clientProductFiltersSchema = withRangeRefine(z.object(filtersShape));
+
+export const clientProductsQuerySchema = withRangeRefine(
+  z.object({
+    ...filtersShape,
+    sort: z.string().optional(),
+    order: z.enum(['asc', 'desc']).optional(),
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+  }),
+);
+
+export type ClientProductFiltersInput = z.infer<typeof clientProductFiltersSchema>;
+
+export const clientExportBodySchema = withRangeRefine(
+  z.object({
+    term: z.string().optional(),
+    itemStatuses: z.array(itemStatusEnum).default([]),
+    iddMin: z.coerce.number().min(-100).max(100).optional(),
+    iddMax: z.coerce.number().min(-100).max(100).optional(),
+    stockDaysMin: z.coerce.number().min(0).max(365).optional(),
+    stockDaysMax: z.coerce.number().min(0).max(365).optional(),
+    tiedUpCapitalMin: z.coerce.number().min(0).optional(),
+    tiedUpCapitalMax: z.coerce.number().min(0).optional(),
+  }),
+);
+
+export type ClientExportBodyInput = z.infer<typeof clientExportBodySchema>;

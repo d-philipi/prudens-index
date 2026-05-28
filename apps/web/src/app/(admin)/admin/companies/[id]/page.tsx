@@ -40,7 +40,7 @@ export default async function AdminCompanyDetailPage({ params }: PageProps) {
             { label: 'Falha ao carregar empresa' },
           ]}
         />
-        <Link href="/admin" className="text-sm text-slate-600 underline">
+        <Link href="/admin" className="text-sm text-text-subtitle underline">
           ← Voltar para empresas
         </Link>
         <section className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -65,11 +65,11 @@ export default async function AdminCompanyDetailPage({ params }: PageProps) {
           { label: detail.company.name },
         ]}
       />
-      <Link href="/admin" className="text-sm text-slate-600 underline">
+      <Link href="/admin" className="text-sm text-text-subtitle underline">
         ← Voltar
       </Link>
       <CompanyOverview detail={detail} />
-      <section className="rounded-lg border bg-white p-4">
+      <section className="rounded-lg border border-border-default bg-surface-card p-4">
         <h2 className="font-medium">Fonte ativa do dashboard do cliente</h2>
         {detail.activeImportJobId ? (
           <p className="mt-2 text-sm text-green-800">
@@ -84,16 +84,16 @@ export default async function AdminCompanyDetailPage({ params }: PageProps) {
           <h2 className="font-medium">Histórico de importações</h2>
           <Link
             href={`/admin/imports?company=${detail.company.id}`}
-            className="text-sm text-slate-600 underline"
+            className="text-sm text-text-subtitle underline"
           >
             {strings.admin.importSpreadsheetForCompany}
           </Link>
         </div>
-        <ul className="divide-y rounded-lg border bg-white">
+        <ul className="divide-y divide-border-default rounded-lg border border-border-default bg-surface-card">
           {detail.imports.map((job) => (
             <li key={job.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
               <span>{job.originalFilename}</span>
-              <span className="text-slate-500">
+              <span className="text-text-subtitle">
                 {strings.statusLabels[job.status]}
                 {job.isActive ? ' · ativo' : ''}
                 {job.rowCount != null ? ` · ${job.rowCount} linhas` : ''}

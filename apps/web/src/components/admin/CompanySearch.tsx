@@ -22,11 +22,11 @@ export function CompanySearch() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Buscar empresa por nome…"
-        className="flex-1 rounded border px-3 py-2 text-sm"
+        className="flex-1 rounded border border-border-default bg-surface-card px-3 py-2 text-sm"
       />
       <button
         type="submit"
-        className="rounded bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800"
+        className="rounded border border-brand bg-brand px-4 py-2 text-sm font-medium text-white"
       >
         Buscar
       </button>

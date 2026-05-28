@@ -5,6 +5,30 @@ export const strings = {
     notAvailable: '—',
     signOut: 'Sair da conta',
   },
+  auth: {
+    signInTitle: 'Entrar no Prudens Index',
+    signInSubtitle: 'Escolha seu perfil e faça login com e-mail e senha.',
+    profileGroupLabel: 'Tipo de acesso',
+    profileAdmin: 'Administrador',
+    profileClient: 'Cliente',
+    mismatchUseAdmin:
+      'Esta conta é de administrador. Selecione Administrador acima e entre novamente.',
+    mismatchUseClient:
+      'Esta conta é de cliente. Selecione Cliente acima e entre novamente.',
+    pendingInviteHint:
+      'Se você recebeu um convite por e-mail, abra o link do convite para ativar sua conta.',
+  },
+  nav: {
+    filters: 'Filtros',
+    clearFilters: 'Limpar filtros',
+    searchProduct: 'Buscar por nome ou EAN',
+    statusFilter: 'Status do item',
+    iddRange: 'Faixa de IDD',
+    stockDaysRange: 'Dias de estoque',
+    capitalRange: 'Capital imobilizado',
+    collapseMenu: 'Recolher menu',
+    expandMenu: 'Expandir menu',
+  },
   admin: {
     companies: 'Empresas',
     newCompany: 'Nova empresa',

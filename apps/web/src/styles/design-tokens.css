@@ -1,0 +1,25 @@
+@theme {
+  --color-brand: #1a4731;
+  --color-brand-accent: #d4a020;
+  --color-surface-page: #f5f5f3;
+  --color-surface-card: #ffffff;
+  --color-border-default: #e2e2de;
+  --color-text-subtitle: #6b7280;
+  --color-status-distribution: #e84040;
+  --color-status-adequate: #16a34a;
+  --color-status-boost: #f59e0b;
+  --color-idd-hero-negative: #f87878;
+  --color-idd-hero-positive: #86efac;
+  --color-idd-table-negative: #e84040;
+  --color-idd-table-low: #16a34a;
+  --color-idd-table-high: #f59e0b;
+  --font-display: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+:root {
+  --sidebar-expanded: 220px;
+  --sidebar-collapsed: 64px;
+  --content-max-width: 1280px;
+}

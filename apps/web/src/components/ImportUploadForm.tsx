@@ -10,6 +10,7 @@ import {
   SPREADSHEET_FILE_ACCEPT,
 } from '@/lib/spreadsheetUpload';
 import type { CompanyDto } from '@prudens/shared/types';
+import { SelectField } from '@/components/shared/SelectField';
 import { strings } from '@/lib/strings';
 
 interface Props {
@@ -128,25 +129,17 @@ export function ImportUploadForm({
 
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-medium">
-        Cliente
-        <select
-          className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm"
-          value={companyId}
-          onChange={(e) => onCompanyChange(e.target.value)}
-        >
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SelectField
+        label="Cliente"
+        value={companyId}
+        onChange={onCompanyChange}
+        options={companies.map((c) => ({ value: c.id, label: c.name }))}
+      />
 
       <div
         {...getRootProps()}
         className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center text-sm ${
-          isDragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300'
+          isDragActive ? 'border-blue-500 bg-blue-50' : 'border-border-default'
         }`}
       >
         <input
@@ -157,19 +150,19 @@ export function ImportUploadForm({
           disabled={uploading || !companyId}
           onChange={onFileInputChange}
         />
-        <p className="text-slate-600">
+        <p className="text-text-subtitle">
           {uploading
             ? 'Enviando…'
             : 'Arraste uma planilha (.xlsx, .xls, .xlsm, .xlsb, .csv, .tsv, .ods…) para esta área'}
         </p>
         {selectedName && !uploading && (
-          <p className="mt-2 text-xs text-slate-500">Último arquivo: {selectedName}</p>
+          <p className="mt-2 text-xs text-text-subtitle">Último arquivo: {selectedName}</p>
         )}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading || !companyId}
-          className="mt-4 rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-4 rounded bg-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Selecionar arquivo
         </button>

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { apiFetch } from '@/lib/apiClient';
 import {
   buildProductsQuery,
+  hasActiveFilters,
   useDashboardStore,
 } from '@/store/dashboardStore';
 import type {
@@ -13,7 +14,7 @@ import type {
   ItemStatus,
 } from '@prudens/shared/types';
 import { IndexHeader } from './IndexHeader';
-import { FilterSidebar } from './FilterSidebar';
+import { FilterBar } from './FilterBar';
 import { IddBarChart } from './IddBarChart';
 import { ProductTable } from './ProductTable';
 import { ExportButton } from './ExportButton';
@@ -33,12 +34,22 @@ export function DashboardView({ initialOverview, initialProducts }: Props) {
   const total = useDashboardStore((s) => s.total);
   const term = useDashboardStore((s) => s.term);
   const itemStatuses = useDashboardStore((s) => s.itemStatuses);
+  const iddMin = useDashboardStore((s) => s.iddMin);
+  const iddMax = useDashboardStore((s) => s.iddMax);
+  const stockDaysMin = useDashboardStore((s) => s.stockDaysMin);
+  const stockDaysMax = useDashboardStore((s) => s.stockDaysMax);
+  const tiedUpCapitalMin = useDashboardStore((s) => s.tiedUpCapitalMin);
+  const tiedUpCapitalMax = useDashboardStore((s) => s.tiedUpCapitalMax);
+  const tiedUpCapitalSliderMax = useDashboardStore((s) => s.tiedUpCapitalSliderMax);
+  const filtersPanelOpen = useDashboardStore((s) => s.filtersPanelOpen);
   const sort = useDashboardStore((s) => s.sort);
   const order = useDashboardStore((s) => s.order);
   const setFilters = useDashboardStore((s) => s.setFilters);
   const setSort = useDashboardStore((s) => s.setSort);
   const setPage = useDashboardStore((s) => s.setPage);
   const applyProductsPage = useDashboardStore((s) => s.applyProductsPage);
+  const clearFilters = useDashboardStore((s) => s.clearFilters);
+  const toggleFiltersPanel = useDashboardStore((s) => s.toggleFiltersPanel);
   const currentPage = useDashboardStore((s) => s.currentPage);
   const totalPages = useDashboardStore((s) => s.totalPages);
   const setLoading = useDashboardStore((s) => s.setLoading);
@@ -75,13 +86,27 @@ export function DashboardView({ initialOverview, initialProducts }: Props) {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [term, itemStatuses, sort, order, currentPage, refetchProducts]);
+  }, [
+    term,
+    itemStatuses,
+    iddMin,
+    iddMax,
+    stockDaysMin,
+    stockDaysMax,
+    tiedUpCapitalMin,
+    tiedUpCapitalMax,
+    sort,
+    order,
+    currentPage,
+    refetchProducts,
+  ]);
 
   const displayOverview = overview ?? initialOverview;
+  const activeFilters = hasActiveFilters(useDashboardStore.getState());
 
   if (!displayOverview.lastUpdatedAt) {
     return (
-      <p className="rounded border bg-white p-8 text-center text-sm text-slate-600">
+      <p className="rounded-lg border border-border-default bg-surface-card p-8 text-center text-sm text-text-subtitle">
         {strings.client.noStockData}
       </p>
     );
@@ -103,33 +128,48 @@ export function DashboardView({ initialOverview, initialProducts }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-3 overflow-x-hidden lg:flex-row lg:gap-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-x-hidden lg:gap-4">
-        <IndexHeader overview={displayOverview} />
-        {loading && (
-          <p className="text-xs text-slate-500">{strings.client.updatingProducts}</p>
-        )}
-        <IddBarChart data={chartData} />
-        <ProductTable
-          products={products}
-          total={total}
-          sort={sort}
-          order={order}
-          onSort={handleSort}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(page) => setPage(page)}
-        />
+    <div className="flex flex-col gap-4 overflow-x-hidden">
+      <IndexHeader overview={displayOverview} />
+      {loading ? (
+        <p className="text-xs text-text-subtitle">{strings.client.updatingProducts}</p>
+      ) : null}
+      <IddBarChart data={chartData} />
+      <FilterBar
+        open={filtersPanelOpen}
+        onToggle={toggleFiltersPanel}
+        term={term}
+        itemStatuses={itemStatuses}
+        iddMin={iddMin}
+        iddMax={iddMax}
+        stockDaysMin={stockDaysMin}
+        stockDaysMax={stockDaysMax}
+        tiedUpCapitalMin={tiedUpCapitalMin}
+        tiedUpCapitalMax={tiedUpCapitalMax}
+        tiedUpCapitalSliderMax={tiedUpCapitalSliderMax}
+        showClear={activeFilters}
+        onTermChange={(t) => setFilters({ term: t })}
+        onStatusToggle={toggleStatus}
+        onIddMinChange={(v) => setFilters({ iddMin: v })}
+        onIddMaxChange={(v) => setFilters({ iddMax: v })}
+        onStockDaysMinChange={(v) => setFilters({ stockDaysMin: v })}
+        onStockDaysMaxChange={(v) => setFilters({ stockDaysMax: v })}
+        onTiedUpCapitalMinChange={(v) => setFilters({ tiedUpCapitalMin: v })}
+        onTiedUpCapitalMaxChange={(v) => setFilters({ tiedUpCapitalMax: v })}
+        onClear={clearFilters}
+      />
+      <div className="flex justify-end">
+        <ExportButton />
       </div>
-      <div className="space-y-4">
-        <FilterSidebar
-          term={term}
-          itemStatuses={itemStatuses}
-          onTermChange={(t) => setFilters({ term: t })}
-          onStatusToggle={toggleStatus}
-        />
-        <ExportButton term={term} itemStatuses={itemStatuses} />
-      </div>
+      <ProductTable
+        products={products}
+        total={total}
+        sort={sort}
+        order={order}
+        onSort={handleSort}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => setPage(page)}
+      />
     </div>
   );
 }

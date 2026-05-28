@@ -201,7 +201,7 @@ export function CreateCompanyForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
         {submitting ? strings.admin.creatingCompany : strings.admin.createCompany}
       </button>

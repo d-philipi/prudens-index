@@ -14,7 +14,7 @@ export default function NewCompanyPage() {
       />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">{strings.admin.newCompanyTitle}</h1>
-        <Link href="/admin" className="text-sm text-slate-600 underline">
+        <Link href="/admin" className="text-sm text-text-subtitle underline">
           {strings.admin.backToCompanies}
         </Link>
       </div>

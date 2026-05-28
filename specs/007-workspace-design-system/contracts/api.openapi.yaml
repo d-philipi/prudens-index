@@ -1,0 +1,100 @@
+openapi: 3.1.0
+info:
+  title: Prudens Index API — Client Products Filters (007)
+  version: 0.1.0
+  description: |
+    Extensão do contrato GET /api/client/products para filtros numéricos
+    alinhados ao painel de filtros horizontal da dashboard cliente.
+
+paths:
+  /api/client/products:
+    get:
+      summary: Lista produtos do cliente com filtros e paginação
+      tags: [Client]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: term
+          in: query
+          schema: { type: string }
+          description: Busca por nome ou EAN (ilike)
+        - name: item_status
+          in: query
+          schema:
+            oneOf:
+              - type: string
+                enum: [distribution, adequate, boost]
+              - type: array
+                items:
+                  type: string
+                  enum: [distribution, adequate, boost]
+          description: Filtro por status; repetível ou CSV
+        - name: idd_min
+          in: query
+          schema: { type: number, minimum: -100, maximum: 100 }
+        - name: idd_max
+          in: query
+          schema: { type: number, minimum: -100, maximum: 100 }
+        - name: stock_days_min
+          in: query
+          schema: { type: number, minimum: 0, maximum: 365 }
+        - name: stock_days_max
+          in: query
+          schema: { type: number, minimum: 0, maximum: 365 }
+        - name: tied_up_capital_min
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: tied_up_capital_max
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: sort
+          in: query
+          schema: { type: string }
+        - name: order
+          in: query
+          schema: { type: string, enum: [asc, desc] }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: Página de produtos + chart_data filtrados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientProductsResponse'
+        '400':
+          description: Range inválido (ex. idd_min > idd_max)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ClientProductsResponse:
+      type: object
+      required: [items, total, currentPage, totalPages, pageSize, chart_data]
+      properties:
+        items:
+          type: array
+          items: { type: object }
+        chart_data:
+          type: array
+          items:
+            type: object
+            required: [product_name, idd, item_status]
+            properties:
+              product_name: { type: string }
+              idd: { type: number }
+              item_status:
+                type: string
+                enum: [distribution, adequate, boost]
+        total: { type: integer }
+        currentPage: { type: integer }
+        totalPages: { type: integer }
+        pageSize: { type: integer }
+        nextCursor: { type: string, nullable: true }

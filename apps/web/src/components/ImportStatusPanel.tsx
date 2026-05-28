@@ -57,7 +57,7 @@ export function ImportStatusPanel({ importJobId, companyId }: Props) {
   const statusLabel = strings.statusLabels[job.status];
 
   return (
-    <div className="mt-4 rounded border border-slate-200 bg-white p-4 text-sm">
+    <div className="mt-4 rounded-lg border border-border-default bg-surface-card p-4 text-sm">
       <p>
         <span className="font-medium">{strings.common.status}:</span> {statusLabel}
       </p>
