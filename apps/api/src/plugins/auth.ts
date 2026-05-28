@@ -3,6 +3,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 import { env } from '../lib/env.js';
 import { resolveAuthContext } from '../services/auth-context-service.js';
+import { userSyncService } from '../services/user-sync-service.js';
 import type { AuthContext } from '../types/auth-context.js';
 
 declare module 'fastify' {
@@ -37,9 +38,16 @@ const authPluginImpl: FastifyPluginAsync = async (app) => {
         (payload.primary_email_address as string | undefined) ??
         'unknown@local.dev';
 
-      const ctx = await resolveAuthContext(clerkUserId, email);
+      let ctx = await resolveAuthContext(clerkUserId, email);
       if (!ctx) {
-        return reply.code(403).send({ code: 'FORBIDDEN', message: 'Usuário não encontrado' });
+        await userSyncService.syncFromClerk(clerkUserId);
+        ctx = await resolveAuthContext(clerkUserId, email);
+      }
+      if (!ctx) {
+        return reply.code(403).send({
+          code: 'FORBIDDEN',
+          message: 'Perfil de acesso não configurado. Aguarde o convite ou contate o administrador.',
+        });
       }
       request.auth = ctx;
     } catch {

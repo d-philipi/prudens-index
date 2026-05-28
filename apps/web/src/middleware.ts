@@ -4,7 +4,7 @@ import { homePathForRole, parseRoleFromSessionClaims } from '@/lib/clerkRoles';
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)']);
 const isClientRoute = createRouteMatcher(['/dashboard(.*)']);
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/acesso-pendente']);
+const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/acesso-pendente']);
 const isAccessPendingRoute = createRouteMatcher(['/acesso-pendente']);
 
 export default clerkMiddleware(async (auth, req) => {
