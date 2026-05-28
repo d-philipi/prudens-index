@@ -1,0 +1,152 @@
+openapi: 3.0.3
+info:
+  title: Prudens Index API — Company Cadastro & Financial Products
+  version: 0.1.0
+  description: Contratos da spec 004 para criação de empresa e campos financeiros em produtos.
+paths:
+  /api/admin/companies:
+    post:
+      summary: Cria nova empresa
+      tags: [Admin Companies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompanyRequest'
+      responses:
+        '201':
+          description: Empresa criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyCreated'
+        '400':
+          description: Payload inválido (Zod)
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão de admin
+        '409':
+          description: CNPJ já cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/client/products:
+    get:
+      summary: Lista produtos (campos financeiros incluídos quando persistidos)
+      tags: [Client Products]
+      description: Resposta existente estendida com unitPrice, projectedRevenue, tiedUpCapital, lostRevenue em cada item.
+      responses:
+        '200':
+          description: Página de produtos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StockProduct'
+components:
+  schemas:
+    CreateCompanyRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: Farmácia Exemplo
+        cnpj:
+          type: string
+          nullable: true
+          example: '12.345.678/0001-90'
+        address:
+          type: string
+          nullable: true
+        neighborhood:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 2
+          example: SP
+    CompanyCreated:
+      type: object
+      required: [id, name, slug, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        cnpj:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        neighborhood:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    StockProduct:
+      allOf:
+        - type: object
+          description: Campos base do produto (resumo)
+          properties:
+            id:
+              type: string
+              format: uuid
+            productName:
+              type: string
+            idd:
+              type: number
+            itemStatus:
+              type: string
+              enum: [distribution, adequate, boost]
+        - type: object
+          description: Campos financeiros (spec 004)
+          properties:
+            unitPrice:
+              type: number
+              nullable: true
+              description: Valor unitário da planilha
+            projectedRevenue:
+              type: integer
+              nullable: true
+              description: Faturamento projetado (calculado no worker)
+            tiedUpCapital:
+              type: integer
+              nullable: true
+              description: Capital imobilizado (calculado no worker)
+            lostRevenue:
+              type: integer
+              nullable: true
+              description: Faturamento perdido (calculado no worker)
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+          example: CNPJ já cadastrado

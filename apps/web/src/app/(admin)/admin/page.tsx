@@ -30,6 +30,12 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
     <div className="space-y-8">
       <Breadcrumb items={[{ label: strings.admin.companies }]} />
       <div className="flex flex-wrap items-center justify-between gap-4">
+        <Link
+          href="/admin/companies/new"
+          className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+        >
+          {strings.admin.newCompany}
+        </Link>
         <p className="text-sm text-slate-600">
           <Link href="/admin/imports" className="underline">
             {strings.admin.uploadSpreadsheet}

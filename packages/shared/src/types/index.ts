@@ -8,6 +8,32 @@ export interface CompanyDto {
   id: string;
   name: string;
   slug: string;
+  cnpj?: string | null;
+  address?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+}
+
+export interface CreateCompanyRequest {
+  name: string;
+  cnpj?: string | null;
+  address?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+}
+
+export interface CompanyCreated {
+  id: string;
+  name: string;
+  slug: string;
+  cnpj: string | null;
+  address: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  createdAt: string;
 }
 
 export interface ImportJobDto {
@@ -43,6 +69,10 @@ export interface StockProductDto {
   stock: number | null;
   averageDemand: number | null;
   stockDays: number | null;
+  unitPrice: number | null;
+  projectedRevenue: number | null;
+  tiedUpCapital: number | null;
+  lostRevenue: number | null;
   itemStatus: ItemStatus;
 }
 

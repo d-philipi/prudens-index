@@ -41,6 +41,10 @@ export function toStockProductDto(row: typeof stockProducts.$inferSelect): Stock
     stock: row.stock,
     averageDemand: num(row.averageDemand),
     stockDays: num(row.stockDays),
+    unitPrice: num(row.unitPrice),
+    projectedRevenue: row.projectedRevenue,
+    tiedUpCapital: row.tiedUpCapital,
+    lostRevenue: row.lostRevenue,
     itemStatus: row.itemStatus as StockProductDto['itemStatus'],
   };
 }

@@ -4,6 +4,7 @@ import '../lib/load-env.js';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import postgres from 'postgres';
 import { getR2Client } from '../lib/r2-client.js';
+import { calculateFinancialMetrics } from '@prudens/domain-metrics';
 import { spreadsheetParserService } from '../services/spreadsheet-parser-service.js';
 
 const IMPORT_QUEUE_NAME = 'process-import';
@@ -57,29 +58,52 @@ async function runJob(importJobId: string) {
     }
 
     for (const p of products) {
+      const stock = p.stock != null ? Number(p.stock) : 0;
+      const avg = p.averageDemand != null ? Number(p.averageDemand) : 0;
+      const unitPrice = p.unitPrice;
+      const financial =
+        unitPrice != null
+          ? calculateFinancialMetrics({
+              stock,
+              average_demand: avg,
+              unit_price: unitPrice,
+            })
+          : null;
+
       await sql`
         INSERT INTO stock_products (
           import_job_id, company_id, product_name, ean,
           stores_with_stock, distribution, branches_with_demand,
           demand_vs_distribution, idd, stock, average_demand, stock_days,
+          unit_price, projected_revenue, tied_up_capital, lost_revenue,
           item_status
         ) VALUES (
           ${importJobId}, ${job.company_id}, ${p.productName}, ${p.ean},
           ${p.storesWithStock}, ${p.distribution},
           ${p.branchesWithDemand}, ${p.demandVsDistribution},
           ${p.idd}, ${p.stock}, ${p.averageDemand}, ${p.stockDays},
+          ${unitPrice}, ${financial?.projected_revenue ?? null},
+          ${financial?.tied_up_capital ?? null}, ${financial?.lost_revenue ?? null},
           ${p.itemStatus}
         )
       `;
     }
 
-    const errorSummary =
-      lineErrors.length > 0
-        ? `${lineErrors.length} linha(s) ignorada(s): ${lineErrors
-            .slice(0, 5)
-            .map((e) => `L${e.row_number} ${e.column_name}`)
-            .join('; ')}`
-        : null;
+    const lineOnlyErrors = lineErrors.filter((e) => e.row_number > 0);
+    const missingCols = [...new Set(lineErrors.filter((e) => e.row_number === 0).map((e) => e.column_name))];
+    const parts: string[] = [];
+    if (missingCols.length > 0) {
+      parts.push(`Colunas ausentes (valores como "—"): ${missingCols.join(', ')}`);
+    }
+    if (lineOnlyErrors.length > 0) {
+      parts.push(
+        `${lineOnlyErrors.length} linha(s) ignorada(s): ${lineOnlyErrors
+          .slice(0, 5)
+          .map((e) => `L${e.row_number} ${e.column_name}`)
+          .join('; ')}`,
+      );
+    }
+    const errorSummary = parts.length > 0 ? parts.join(' · ') : null;
 
     await sql`
       UPDATE import_jobs SET is_active = false

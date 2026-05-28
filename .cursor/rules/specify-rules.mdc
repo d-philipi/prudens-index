@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 # index Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-27
+Auto-generated from all feature plans. Last updated: 2026-05-28
 
 ## Active Technologies
 - TypeScript strict — Next.js 15 (frontend), Node.js 20 LTS (API/worker) + See `.specify/memory/constitution.md` (Fastify, Drizzle, BullMQ, Shadcn/UI, etc.) (002-align-stock-dashboards)
@@ -13,6 +13,7 @@ Auto-generated from all feature plans. Last updated: 2026-05-27
 - TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS + Fastify, Drizzle, BullMQ, SheetJS (xlsx), Zod, Shadcn/UI, Tailwind v4, Recharts, Clerk, Zustand (002-align-stock-dashboards)
 - PostgreSQL 16, Redis 7, Cloudflare R2 (002-align-stock-dashboards)
 - TypeScript strict — Next.js 15 App Router (Turbopack), Node.js 20 LTS + Fastify, Drizzle, Zod, BullMQ, Clerk, Shadcn/UI, Tailwind v4, Recharts (002-align-stock-dashboards)
+- TypeScript strict — Next.js 15 App Router (Turbopack), Node.js 20 LTS + Fastify, Drizzle, Zod, BullMQ, SheetJS (xlsx), Clerk, Shadcn/UI, Tailwind v4, Recharts (004-company-finance-cadastro)
 
 - TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS + Fastify, Drizzle, BullMQ, SheetJS, Zod, Shadcn/UI, Tailwind v4, Recharts, react-dropzone, Clerk, Zustand (001-stock-import-dashboard)
 
@@ -33,9 +34,9 @@ npm test; npm run lint
 TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS: Follow standard conventions
 
 ## Recent Changes
+- 004-company-finance-cadastro: Added TypeScript strict — Next.js 15 App Router (Turbopack), Node.js 20 LTS + Fastify, Drizzle, Zod, BullMQ, SheetJS (xlsx), Clerk, Shadcn/UI, Tailwind v4, Recharts
 - 002-align-stock-dashboards: Added TypeScript strict — Next.js 15 App Router (Turbopack), Node.js 20 LTS + Fastify, Drizzle, Zod, BullMQ, Clerk, Shadcn/UI, Tailwind v4, Recharts
 - 002-align-stock-dashboards: Added TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS + Fastify, Drizzle, BullMQ, SheetJS (xlsx), Zod, Shadcn/UI, Tailwind v4, Recharts, Clerk, Zustand
-- 002-align-stock-dashboards: Added TypeScript strict — Next.js 15 (frontend), Node.js 20 LTS (API/worker) + See `.specify/memory/constitution.md` (Fastify, Drizzle, BullMQ, Shadcn/UI, etc.)
 
 
 <!-- MANUAL ADDITIONS START -->

@@ -22,7 +22,7 @@ export function FilterSidebar({
   onStatusToggle,
 }: Props) {
   return (
-    <aside className="w-full shrink-0 space-y-4 rounded-lg border bg-white p-4 lg:w-56">
+    <aside className="w-full max-w-full shrink-0 space-y-4 rounded-lg border bg-white p-4 lg:w-52 xl:w-56">
       <div>
         <label htmlFor="product-search" className="text-sm font-medium">
           Buscar produto

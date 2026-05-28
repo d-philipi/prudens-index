@@ -19,6 +19,35 @@ export const companyRepository = {
     return rows[0] ?? null;
   },
 
+  async findByCnpj(cnpj: string) {
+    const rows = await db.select().from(companies).where(eq(companies.cnpj, cnpj)).limit(1);
+    return rows[0] ?? null;
+  },
+
+  async create(data: {
+    name: string;
+    slug: string;
+    cnpj?: string | null;
+    address?: string | null;
+    neighborhood?: string | null;
+    city?: string | null;
+    state?: string | null;
+  }) {
+    const [row] = await db
+      .insert(companies)
+      .values({
+        name: data.name,
+        slug: data.slug,
+        cnpj: data.cnpj ?? null,
+        address: data.address ?? null,
+        neighborhood: data.neighborhood ?? null,
+        city: data.city ?? null,
+        state: data.state ?? null,
+      })
+      .returning();
+    return row!;
+  },
+
   async listWithStats(search?: string) {
     const searchClause = search?.trim()
       ? ilike(companies.name, `%${search.trim()}%`)
