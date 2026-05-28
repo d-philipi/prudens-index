@@ -10,6 +10,7 @@ import {
   SPREADSHEET_FILE_ACCEPT,
 } from '@/lib/spreadsheetUpload';
 import type { CompanyDto } from '@prudens/shared/types';
+import { strings } from '@/lib/strings';
 
 interface Props {
   companies: CompanyDto[];
@@ -28,7 +29,7 @@ export function ImportUploadForm({ companies, onUploadStarted }: Props) {
     async (file: File) => {
       if (!companyId) return;
       if (!isSpreadsheetFile(file)) {
-        setError('Selecione uma planilha (.xlsx, .xls, .xlsm, .xlsb, .csv, .tsv ou .ods)');
+        setError(strings.errors.invalidSpreadsheet);
         return;
       }
 
@@ -37,7 +38,7 @@ export function ImportUploadForm({ companies, onUploadStarted }: Props) {
       setUploading(true);
       try {
         const token = await getToken();
-        if (!token) throw new Error('Not authenticated');
+        if (!token) throw new Error('Usuário não autenticado');
 
         const created = await apiFetch<{
           importJobId: string;
@@ -78,7 +79,7 @@ export function ImportUploadForm({ companies, onUploadStarted }: Props) {
 
         onUploadStarted(created.importJobId);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Upload failed');
+        setError(e instanceof Error ? e.message : strings.errors.uploadFailed);
       } finally {
         setUploading(false);
       }
@@ -98,7 +99,7 @@ export function ImportUploadForm({ companies, onUploadStarted }: Props) {
     if (!isSpreadsheetFile(file)) {
       return {
         code: 'file-invalid-type',
-        message: 'Apenas arquivos de planilha são permitidos',
+        message: strings.errors.spreadsheetOnly,
       };
     }
     return null;

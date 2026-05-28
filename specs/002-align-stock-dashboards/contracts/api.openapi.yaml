@@ -1,0 +1,235 @@
+openapi: 3.1.0
+info:
+  title: Prudens Index API
+  version: 0.2.0
+  description: Feature 002 — stock schema alignment, IDD item_status, admin & client dashboards
+
+servers:
+  - url: http://localhost:3001
+    description: Local API
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Clerk session JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ItemStatus:
+      type: string
+      enum: [distribution, adequate, boost]
+
+    StockProduct:
+      type: object
+      required: [id, productName, itemStatus, idd]
+      properties:
+        id: { type: string, format: uuid }
+        productName: { type: string }
+        ean: { type: string, nullable: true }
+        storesWithStock: { type: integer }
+        distribution: { type: number, nullable: true }
+        branchesWithDemand: { type: integer }
+        demandVsDistribution: { type: number, nullable: true }
+        idd: { type: number }
+        stock: { type: integer, nullable: true }
+        averageDemand: { type: number, nullable: true }
+        stockDays: { type: number, nullable: true }
+        itemStatus: { $ref: '#/components/schemas/ItemStatus' }
+
+    AdminMetrics:
+      type: object
+      required: [totalCompanies, totalProducts, avgIddByCompany]
+      properties:
+        totalCompanies: { type: integer }
+        totalProducts: { type: integer }
+        avgIddByCompany:
+          type: array
+          items:
+            type: object
+            required: [companyId, companyName, avgIdd]
+            properties:
+              companyId: { type: string, format: uuid }
+              companyName: { type: string }
+              avgIdd: { type: number, nullable: true }
+
+    AdminCompanyCard:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        productCount: { type: integer }
+        avgIdd: { type: number, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    AdminCompanyDetail:
+      type: object
+      properties:
+        company:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            slug: { type: string }
+            createdAt: { type: string, format: date-time }
+        imports:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              status: { enum: [queued, processing, completed, failed] }
+              originalFilename: { type: string }
+              isActive: { type: boolean }
+              rowCount: { type: integer, nullable: true }
+              completedAt: { type: string, format: date-time, nullable: true }
+        activeImportJobId: { type: string, format: uuid, nullable: true }
+
+    ClientOverview:
+      type: object
+      required: [companyName, avgIdd, lastUpdatedAt]
+      properties:
+        companyName: { type: string }
+        avgIdd: { type: number, nullable: true }
+        lastUpdatedAt: { type: string, format: date-time, nullable: true }
+
+    ChartDataPoint:
+      type: object
+      required: [product_name, idd, item_status]
+      properties:
+        product_name: { type: string }
+        idd: { type: number }
+        item_status: { $ref: '#/components/schemas/ItemStatus' }
+
+    ClientProductsResponse:
+      type: object
+      required: [items, total, chart_data]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/StockProduct' }
+        nextCursor: { type: string, nullable: true }
+        total: { type: integer }
+        chart_data:
+          type: array
+          items: { $ref: '#/components/schemas/ChartDataPoint' }
+
+paths:
+  /health:
+    get:
+      security: []
+      responses:
+        '200': { description: OK }
+
+  /api/admin/metrics:
+    get:
+      summary: Global admin metrics (AVG IDD per company in DB)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminMetrics' }
+        '403': { description: Not admin }
+
+  /api/admin/companies:
+    get:
+      summary: List companies for admin cards (optional search)
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminCompanyCard' }
+
+  /api/admin/companies/{id}:
+    get:
+      summary: Company detail with import jobs and active source
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCompanyDetail' }
+
+  /api/client/overview:
+    get:
+      summary: Client company overview (IDD avg, last update)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientOverview' }
+
+  /api/client/products:
+    get:
+      summary: Paginated products + chart_data (same filters)
+      parameters:
+        - name: term
+          in: query
+          schema: { type: string }
+        - name: item_status
+          in: query
+          schema: { type: string }
+          description: Comma-separated or repeated
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - product_name
+              - ean
+              - idd
+              - stock
+              - stores_with_stock
+              - item_status
+        - name: order
+          in: query
+          schema: { enum: [asc, desc] }
+        - name: limit
+          in: query
+          schema: { type: integer, maximum: 100, default: 50 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientProductsResponse' }
+
+  /api/client/export-pdf:
+    post:
+      summary: Export PDF for current filters (body mirrors query filters)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                term: { type: string }
+                item_status:
+                  type: array
+                  items: { $ref: '#/components/schemas/ItemStatus' }
+      responses:
+        '200':
+          description: application/pdf

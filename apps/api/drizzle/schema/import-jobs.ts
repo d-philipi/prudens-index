@@ -1,4 +1,4 @@
-import { boolean, integer, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { companies } from './companies.js';
 import { users } from './users.js';
 
@@ -23,6 +23,15 @@ export const importJobs = pgTable('import_jobs', {
   rowCount: integer('row_count'),
   errorCode: varchar('error_code', { length: 64 }),
   errorMessage: text('error_message'),
+  validationErrors: jsonb('validation_errors').$type<
+    Array<{
+      row_number: number;
+      column_name: string;
+      error_message: string;
+      expected_value: string | null;
+      received_value: string | null;
+    }>
+  >().notNull().default([]),
   isActive: boolean('is_active').notNull().default(false),
   queuedAt: timestamp('queued_at', { withTimezone: true }).notNull().defaultNow(),
   startedAt: timestamp('started_at', { withTimezone: true }),

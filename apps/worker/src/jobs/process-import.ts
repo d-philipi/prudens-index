@@ -38,27 +38,48 @@ async function runJob(importJobId: string) {
     const bytes = await res.Body?.transformToByteArray();
     if (!bytes) throw new Error('R2_EMPTY');
 
-    const products = spreadsheetParserService.parseBuffer(
+    const { products, lineErrors } = spreadsheetParserService.parseBuffer(
       Buffer.from(bytes),
       job.original_filename,
     );
+
+    if (products.length === 0) {
+      const summary =
+        lineErrors.length > 0
+          ? `Nenhuma linha válida. ${lineErrors.length} erro(s). Primeiro: linha ${lineErrors[0]!.row_number}, coluna ${lineErrors[0]!.column_name}`
+          : 'Nenhuma linha válida na planilha';
+      await sql`
+        UPDATE import_jobs
+        SET status = 'failed', error_message = ${summary}, validation_errors = ${JSON.stringify(lineErrors)}::jsonb, completed_at = now()
+        WHERE id = ${importJobId}
+      `;
+      return;
+    }
 
     for (const p of products) {
       await sql`
         INSERT INTO stock_products (
           import_job_id, company_id, product_name, ean,
-          branches_with_stock, distribution, branches_with_demand,
-          demand_vs_distribution, idd, stock, avg_demand, stock_days,
-          item_status, category
+          stores_with_stock, distribution, branches_with_demand,
+          demand_vs_distribution, idd, stock, average_demand, stock_days,
+          item_status
         ) VALUES (
           ${importJobId}, ${job.company_id}, ${p.productName}, ${p.ean},
-          ${sql.json(p.branchesWithStock)}, ${p.distribution},
-          ${sql.json(p.branchesWithDemand)}, ${p.demandVsDistribution},
-          ${p.idd}, ${p.stock}, ${p.avgDemand}, ${p.stockDays},
-          ${p.itemStatus}, ${p.category}
+          ${p.storesWithStock}, ${p.distribution},
+          ${p.branchesWithDemand}, ${p.demandVsDistribution},
+          ${p.idd}, ${p.stock}, ${p.averageDemand}, ${p.stockDays},
+          ${p.itemStatus}
         )
       `;
     }
+
+    const errorSummary =
+      lineErrors.length > 0
+        ? `${lineErrors.length} linha(s) ignorada(s): ${lineErrors
+            .slice(0, 5)
+            .map((e) => `L${e.row_number} ${e.column_name}`)
+            .join('; ')}`
+        : null;
 
     await sql`
       UPDATE import_jobs SET is_active = false
@@ -66,7 +87,8 @@ async function runJob(importJobId: string) {
     `;
     await sql`
       UPDATE import_jobs
-      SET status = 'completed', completed_at = now(), row_count = ${products.length}, is_active = true
+      SET status = 'completed', completed_at = now(), row_count = ${products.length},
+          is_active = true, error_message = ${errorSummary}, validation_errors = ${JSON.stringify(lineErrors)}::jsonb
       WHERE id = ${importJobId}
     `;
   } catch (e) {

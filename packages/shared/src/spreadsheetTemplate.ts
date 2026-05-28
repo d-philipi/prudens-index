@@ -15,8 +15,14 @@ export const SPREADSHEET_HEADERS = [
 
 export type SpreadsheetHeader = (typeof SPREADSHEET_HEADERS)[number];
 
-const numericString = z.union([z.number(), z.string()]).transform((v) => {
-  if (typeof v === 'number') return v;
+const intCell = z.union([z.number(), z.string()]).transform((v) => {
+  if (typeof v === 'number') return Number.isFinite(v) ? Math.trunc(v) : null;
+  const n = parseInt(String(v).replace(/\s/g, ''), 10);
+  return Number.isFinite(n) ? n : null;
+});
+
+const floatCell = z.union([z.number(), z.string()]).transform((v) => {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
   const n = parseFloat(String(v).replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 });
@@ -24,14 +30,14 @@ const numericString = z.union([z.number(), z.string()]).transform((v) => {
 export const spreadsheetRowSchema = z.object({
   product_name: z.string().min(1),
   ean: z.string().nullable().optional(),
-  branches_with_stock_raw: z.string(),
-  distribution: numericString.nullable(),
-  branches_with_demand_raw: z.string(),
-  demand_vs_distribution: numericString.nullable(),
-  idd: numericString.nullable(),
-  stock: numericString.nullable(),
-  avg_demand: numericString.nullable(),
-  stock_days: numericString.nullable(),
+  stores_with_stock: intCell.pipe(z.number().default(0)),
+  distribution: floatCell.nullable(),
+  branches_with_demand: intCell.pipe(z.number().default(0)),
+  demand_vs_distribution: floatCell.nullable(),
+  idd: floatCell,
+  stock: intCell.nullable(),
+  average_demand: floatCell.nullable(),
+  stock_days: floatCell.nullable(),
 });
 
 export type SpreadsheetRowInput = z.infer<typeof spreadsheetRowSchema>;
@@ -66,17 +72,24 @@ function cellToNumber(v: string | number | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function cellToInt(v: string | number | null | undefined): number | null {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? Math.trunc(v) : null;
+  const n = parseInt(String(v).replace(/\s/g, ''), 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function mapRawRow(cells: Record<string, string | number | null>): SpreadsheetRowInput {
   return {
     product_name: String(cells['PRODUTO'] ?? '').trim(),
     ean: cells['EAN'] != null && String(cells['EAN']).trim() !== '' ? String(cells['EAN']) : null,
-    branches_with_stock_raw: String(cells['Lojas com estoque'] ?? ''),
+    stores_with_stock: cellToInt(cells['Lojas com estoque']) ?? 0,
     distribution: cellToNumber(cells['distribuição']),
-    branches_with_demand_raw: String(cells['Lojas com demanda nos últ 3 meses'] ?? ''),
+    branches_with_demand: cellToInt(cells['Lojas com demanda nos últ 3 meses']) ?? 0,
     demand_vs_distribution: cellToNumber(cells['Demanda x Distribuição']),
     idd: cellToNumber(cells['IDD']),
-    stock: cellToNumber(cells['estoque']),
-    avg_demand: cellToNumber(cells['demanda media']),
+    stock: cellToInt(cells['estoque']),
+    average_demand: cellToNumber(cells['demanda media']),
     stock_days: cellToNumber(cells['dias estoque']),
   };
 }

@@ -1,6 +1,6 @@
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-4xl p-4 md:p-8">
+    <div className="mx-auto max-w-6xl p-4 md:p-8">
       <header className="mb-6 border-b pb-4">
         <h1 className="text-xl font-semibold">Prudens Index — Admin</h1>
       </header>

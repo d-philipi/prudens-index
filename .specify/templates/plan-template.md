@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Reference: `.specify/memory/constitution.md` (Prudens Index v1.0.0+)
+Reference: `.specify/memory/constitution.md` (Prudens Index v1.1.0+)
 
 | Gate | Pass criteria |
 |------|----------------|
@@ -42,6 +42,8 @@ Reference: `.specify/memory/constitution.md` (Prudens Index v1.0.0+)
 | Secrets & CORS | No secrets in repo or `NEXT_PUBLIC_*`; production CORS limited to Vercel domain |
 | DRY & naming | No duplicated calculations; file/type naming matches constitution |
 | Mobile-first | Primary flows usable on mobile viewports |
+| Operator language (pt-BR) | UI copy and operator-visible API/worker messages in Brazilian Portuguese |
+| Actionable errors | Data failures identify location (line/column or field), expected vs received, and next step—not codes alone |
 
 If any gate fails, document justification in **Complexity Tracking** below or revise the design.
 
