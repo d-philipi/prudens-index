@@ -1,30 +1,29 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { clientExportBodySchema } from '../schemas/client-product-filters.js';
-import { exportPdfService } from '../services/export-pdf-service.js';
+import { z } from 'zod';
+import { clientExportService } from '../services/client-export-service.js';
 
 export const clientExportRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/api/client/export-pdf', async (request, reply) => {
-    const parsed = clientExportBodySchema.safeParse(request.body ?? {});
-    if (!parsed.success) {
-      return reply.status(400).send({
-        code: 'INVALID_FILTERS',
-        message: parsed.error.errors[0]?.message ?? 'Parâmetros de filtro inválidos.',
-      });
+  app.get('/api/client/export/active-file', async (request, reply) => {
+    try {
+      const result = await clientExportService.getActiveFileExport(request.auth);
+      const accept = request.headers.accept ?? '';
+      const query = z.object({ format: z.string().optional() }).parse(request.query);
+      const prefersJson = accept.includes('application/json') || query.format === 'json';
+
+      if (prefersJson) {
+        return reply.send(result);
+      }
+
+      return reply.redirect(result.url, 302);
+    } catch (err) {
+      const e = err as Error & { statusCode?: number };
+      if (e.statusCode === 404) {
+        return reply.status(404).send({
+          code: 'NO_ACTIVE_IMPORT',
+          message: e.message,
+        });
+      }
+      throw err;
     }
-    const body = parsed.data;
-    const pdf = await exportPdfService.generate(request.auth, {
-      term: body.term,
-      item_status: body.itemStatuses.length > 0 ? body.itemStatuses : undefined,
-      idd_min: body.iddMin,
-      idd_max: body.iddMax,
-      stock_days_min: body.stockDaysMin,
-      stock_days_max: body.stockDaysMax,
-      tied_up_capital_min: body.tiedUpCapitalMin,
-      tied_up_capital_max: body.tiedUpCapitalMax,
-    });
-    return reply
-      .header('Content-Type', 'application/pdf')
-      .header('Content-Disposition', 'attachment; filename="dashboard-report.pdf"')
-      .send(pdf);
   });
 };

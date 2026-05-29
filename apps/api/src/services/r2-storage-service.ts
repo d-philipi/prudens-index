@@ -17,8 +17,8 @@ export const r2StorageService = {
     return getSignedUrl(getR2Client(), cmd, { expiresIn: 900 });
   },
 
-  async getPresignedGetUrl(objectKey: string): Promise<string> {
+  async getPresignedGetUrl(objectKey: string, expiresInSeconds = 900): Promise<string> {
     const cmd = new GetObjectCommand({ Bucket: env.r2Bucket, Key: objectKey });
-    return getSignedUrl(getR2Client(), cmd, { expiresIn: 900 });
+    return getSignedUrl(getR2Client(), cmd, { expiresIn: expiresInSeconds });
   },
 };

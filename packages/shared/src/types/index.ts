@@ -110,6 +110,24 @@ export interface ClientOverviewDto {
   companyName: string;
   avgIdd: number | null;
   lastUpdatedAt: string | null;
+  activeImportJobId: string | null;
+}
+
+export interface NumericRangeDto {
+  min: number;
+  max: number;
+}
+
+export interface ProductRangesResponseDto {
+  hasActiveJob: boolean;
+  idd: NumericRangeDto | null;
+  stockDays: NumericRangeDto | null;
+  tiedUpCapital: NumericRangeDto | null;
+}
+
+export interface ActiveFileExportResponseDto {
+  url: string;
+  filename: string;
 }
 
 export interface ChartDataPointDto {

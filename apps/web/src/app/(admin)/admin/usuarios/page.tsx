@@ -5,7 +5,7 @@ import { UsersPage } from '@/features/admin/components/UsersPage';
 export default async function AdminUsuariosPage() {
   const { getToken } = await auth();
   const token = await getToken();
-  if (!token) redirect('/sign-in');
+  if (!token) redirect('/login');
 
   return <UsersPage />;
 }

@@ -7,7 +7,7 @@ import { strings } from '@/lib/strings';
 
 export default async function AcessoPendentePage() {
   const { userId, sessionClaims } = await auth();
-  if (!userId) redirect('/sign-in');
+  if (!userId) redirect('/login');
 
   const role = parseRoleFromSessionClaims(sessionClaims as Record<string, unknown> | null);
   if (role) redirect(homePathForRole(role));

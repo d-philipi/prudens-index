@@ -28,7 +28,9 @@ export function IddBarChart({ data }: Props) {
   }
 
   return (
-    <div className="h-72 w-full rounded-lg border border-border-default bg-surface-card p-4">
+    <div className="w-full rounded-lg border border-border-default bg-surface-card p-4">
+      <h2 className="mb-3 text-sm font-medium text-brand">{strings.client.chartTitle}</h2>
+      <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e2de" />
@@ -47,6 +49,7 @@ export function IddBarChart({ data }: Props) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

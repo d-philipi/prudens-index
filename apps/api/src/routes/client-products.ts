@@ -1,8 +1,14 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { clientProductsQuerySchema } from '../schemas/client-product-filters.js';
 import { clientProductsService } from '../services/client-products-service.js';
+import { clientProductsRangesService } from '../services/client-products-ranges-service.js';
 
 export const clientProductsRoutes: FastifyPluginAsync = async (app) => {
+  app.get('/api/client/products/ranges', async (request, reply) => {
+    const result = await clientProductsRangesService.getRanges(request.auth);
+    return reply.send(result);
+  });
+
   app.get('/api/client/products', async (request, reply) => {
     const parsed = clientProductsQuerySchema.safeParse(request.query);
     if (!parsed.success) {

@@ -3,6 +3,20 @@ import { calculateFinancialMetrics } from './financial-metrics.js';
 
 describe('calculateFinancialMetrics', () => {
   it.each([
+    { stock: 100, average_demand: 0.9, unit_price: 10, projected: 0, tied: 1000, lost: 0 },
+    { stock: 100, average_demand: 1.9, unit_price: 10, projected: 10, tied: 990, lost: 0 },
+    { stock: 100, average_demand: 0.0, unit_price: 10, projected: 0, tied: 1000, lost: 0 },
+  ])(
+    'floors demand: stock=$stock demand=$average_demand price=$unit_price',
+    ({ stock, average_demand, unit_price, projected, tied, lost }) => {
+      const r = calculateFinancialMetrics({ stock, average_demand, unit_price });
+      expect(r.projected_revenue).toBe(projected);
+      expect(r.tied_up_capital).toBe(tied);
+      expect(r.lost_revenue).toBe(lost);
+    },
+  );
+
+  it.each([
     { stock: 100, average_demand: 80, unit_price: 10, projected: 800, tied: 200, lost: 0 },
     { stock: 50, average_demand: 120, unit_price: 5, projected: 250, tied: 0, lost: 350 },
     { stock: 30, average_demand: 30, unit_price: 7.5, projected: 225, tied: 0, lost: 0 },

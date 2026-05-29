@@ -36,9 +36,9 @@ npm test; npm run lint
 TypeScript strict — Next.js 15 (App Router), Node.js 20 LTS: Follow standard conventions
 
 ## Recent Changes
+- 008-custom-auth-client-ui: Added TypeScript strict — Next.js 15 (frontend), Node.js 20 LTS (API/worker) + See `.specify/memory/constitution.md` (Fastify, Drizzle, BullMQ, Shadcn/UI, etc.)
 - 007-workspace-design-system: Added TypeScript strict — Next.js 15 App Router, Node.js 20 LTS + Tailwind v4, Recharts, Zustand, Clerk, lucide-react, Fastify, Drizzle, Zod
 - 005-clerk-restricted-invites: Added TypeScript strict — Next.js 15 (frontend), Node.js 20 LTS (API/worker) + See `.specify/memory/constitution.md` (Fastify, Drizzle, BullMQ, Shadcn/UI, etc.)
-- 004-company-finance-cadastro: Added TypeScript strict — Next.js 15 App Router (Turbopack), Node.js 20 LTS + Fastify, Drizzle, Zod, BullMQ, SheetJS (xlsx), Clerk, Shadcn/UI, Tailwind v4, Recharts
 
 
 <!-- MANUAL ADDITIONS START -->

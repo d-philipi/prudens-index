@@ -17,6 +17,18 @@ export const strings = {
       'Esta conta é de cliente. Selecione Cliente acima e entre novamente.',
     pendingInviteHint:
       'Se você recebeu um convite por e-mail, abra o link do convite para ativar sua conta.',
+    verifyTitle: 'Confirmar código',
+    verifySubtitle: 'Digite o código enviado para o seu e-mail.',
+    verifyCodeLabel: 'Código de verificação',
+    verifySubmit: 'Confirmar',
+    inviteTitle: 'Criar sua senha',
+    inviteSubtitle: 'Defina uma senha para ativar sua conta.',
+    newPassword: 'Nova senha',
+    confirmPassword: 'Confirmar senha',
+    inviteSubmit: 'Ativar conta',
+    inviteInvalid:
+      'Link de convite inválido ou expirado. Solicite um novo convite ao administrador.',
+    passwordMismatch: 'As senhas não coincidem.',
   },
   nav: {
     filters: 'Filtros',
@@ -88,6 +100,7 @@ export const strings = {
     tiedUpCapitalShort: 'Cap. imobilizado',
     lostRevenue: 'Faturamento Perdido',
     lostRevenueShort: 'Fat. perdido',
+    chartTitle: 'Gráfico de Produto por IDD',
     noChartData: 'Nenhum produto para exibir no gráfico.',
     productsPageInfo: 'de',
     productsLabel: 'produtos',
@@ -95,6 +108,9 @@ export const strings = {
     updatingProducts: 'Atualizando produtos...',
     noStockData:
       'Nenhum dado de estoque disponível ainda. Aguarde o administrador concluir uma importação para sua empresa.',
+    exportSpreadsheet: 'Exportar planilha',
+    exportDownloading: 'Baixando...',
+    exportDisabledTooltip: 'Não há planilha ativa para exportar.',
   },
   errors: {
     uploadFailed: 'Falha no upload',

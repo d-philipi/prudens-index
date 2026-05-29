@@ -6,13 +6,53 @@ import type {
   ClientOverviewDto,
   ClientProductsResponseDto,
   ItemStatus,
+  NumericRangeDto,
+  ProductRangesResponseDto,
   StockProductDto,
 } from '@prudens/shared/types';
 
-const DEFAULT_IDD_MIN = -100;
-const DEFAULT_IDD_MAX = 100;
-const DEFAULT_STOCK_DAYS_MIN = 0;
-const DEFAULT_STOCK_DAYS_MAX = 365;
+export interface FilterBounds {
+  iddMin: number;
+  iddMax: number;
+  stockDaysMin: number;
+  stockDaysMax: number;
+  tiedUpCapitalMin: number;
+  tiedUpCapitalMax: number;
+}
+
+const DEFAULT_BOUNDS: FilterBounds = {
+  iddMin: -100,
+  iddMax: 100,
+  stockDaysMin: 0,
+  stockDaysMax: 365,
+  tiedUpCapitalMin: 0,
+  tiedUpCapitalMax: 0,
+};
+
+function rangeOrDefault(r: NumericRangeDto | null | undefined, fallback: [number, number]): [number, number] {
+  if (!r || r.min == null || r.max == null) return fallback;
+  return [r.min, r.max];
+}
+
+function boundsFromRanges(ranges: ProductRangesResponseDto): FilterBounds {
+  const idd = rangeOrDefault(ranges.idd, [DEFAULT_BOUNDS.iddMin, DEFAULT_BOUNDS.iddMax]);
+  const days = rangeOrDefault(ranges.stockDays, [
+    DEFAULT_BOUNDS.stockDaysMin,
+    DEFAULT_BOUNDS.stockDaysMax,
+  ]);
+  const cap = rangeOrDefault(ranges.tiedUpCapital, [
+    DEFAULT_BOUNDS.tiedUpCapitalMin,
+    DEFAULT_BOUNDS.tiedUpCapitalMax,
+  ]);
+  return {
+    iddMin: idd[0],
+    iddMax: idd[1],
+    stockDaysMin: days[0],
+    stockDaysMax: days[1],
+    tiedUpCapitalMin: cap[0],
+    tiedUpCapitalMax: cap[1],
+  };
+}
 
 interface DashboardState {
   overview: ClientOverviewDto | null;
@@ -31,13 +71,14 @@ interface DashboardState {
   stockDaysMax: number;
   tiedUpCapitalMin: number;
   tiedUpCapitalMax: number;
-  tiedUpCapitalSliderMax: number;
+  filterBounds: FilterBounds;
   filtersPanelOpen: boolean;
   sort: string;
   order: 'asc' | 'desc';
   loaded: boolean;
   loading: boolean;
   setInitial: (overview: ClientOverviewDto, page: ClientProductsResponseDto) => void;
+  setRangeBounds: (ranges: ProductRangesResponseDto) => void;
   setFilters: (partial: {
     term?: string;
     itemStatuses?: ItemStatus[];
@@ -57,14 +98,6 @@ interface DashboardState {
   toggleFiltersPanel: () => void;
 }
 
-function maxTiedUpCapital(products: StockProductDto[]): number {
-  let max = 0;
-  for (const p of products) {
-    if (p.tiedUpCapital != null && p.tiedUpCapital > max) max = p.tiedUpCapital;
-  }
-  return max;
-}
-
 function applyRangeUpdate(
   currentMin: number,
   currentMax: number,
@@ -79,15 +112,16 @@ function applyRangeUpdate(
 }
 
 export function hasActiveFilters(state: DashboardState): boolean {
+  const b = state.filterBounds;
   return (
     state.term.trim().length > 0 ||
     state.itemStatuses.length > 0 ||
-    state.iddMin !== DEFAULT_IDD_MIN ||
-    state.iddMax !== DEFAULT_IDD_MAX ||
-    state.stockDaysMin !== DEFAULT_STOCK_DAYS_MIN ||
-    state.stockDaysMax !== DEFAULT_STOCK_DAYS_MAX ||
-    state.tiedUpCapitalMin > 0 ||
-    (state.tiedUpCapitalSliderMax > 0 && state.tiedUpCapitalMax < state.tiedUpCapitalSliderMax)
+    state.iddMin !== b.iddMin ||
+    state.iddMax !== b.iddMax ||
+    state.stockDaysMin !== b.stockDaysMin ||
+    state.stockDaysMax !== b.stockDaysMax ||
+    state.tiedUpCapitalMin !== b.tiedUpCapitalMin ||
+    state.tiedUpCapitalMax !== b.tiedUpCapitalMax
   );
 }
 
@@ -102,20 +136,19 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   nextCursor: null,
   term: '',
   itemStatuses: [],
-  iddMin: DEFAULT_IDD_MIN,
-  iddMax: DEFAULT_IDD_MAX,
-  stockDaysMin: DEFAULT_STOCK_DAYS_MIN,
-  stockDaysMax: DEFAULT_STOCK_DAYS_MAX,
-  tiedUpCapitalMin: 0,
-  tiedUpCapitalMax: 0,
-  tiedUpCapitalSliderMax: 0,
+  iddMin: DEFAULT_BOUNDS.iddMin,
+  iddMax: DEFAULT_BOUNDS.iddMax,
+  stockDaysMin: DEFAULT_BOUNDS.stockDaysMin,
+  stockDaysMax: DEFAULT_BOUNDS.stockDaysMax,
+  tiedUpCapitalMin: DEFAULT_BOUNDS.tiedUpCapitalMin,
+  tiedUpCapitalMax: DEFAULT_BOUNDS.tiedUpCapitalMax,
+  filterBounds: DEFAULT_BOUNDS,
   filtersPanelOpen: false,
   sort: 'idd',
   order: 'desc',
   loaded: false,
   loading: false,
   setInitial: (overview, page) => {
-    const sliderMax = maxTiedUpCapital(page.items);
     set({
       overview,
       products: page.items,
@@ -125,10 +158,20 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       totalPages: page.totalPages,
       pageSize: page.pageSize,
       nextCursor: page.nextCursor,
-      tiedUpCapitalSliderMax: sliderMax,
-      tiedUpCapitalMax: sliderMax,
       loaded: true,
       loading: false,
+    });
+  },
+  setRangeBounds: (ranges) => {
+    const b = boundsFromRanges(ranges);
+    set({
+      filterBounds: b,
+      iddMin: b.iddMin,
+      iddMax: b.iddMax,
+      stockDaysMin: b.stockDaysMin,
+      stockDaysMax: b.stockDaysMax,
+      tiedUpCapitalMin: b.tiedUpCapitalMin,
+      tiedUpCapitalMax: b.tiedUpCapitalMax,
     });
   },
   setFilters: (partial) =>
@@ -163,35 +206,27 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setSort: (sort, order) => set({ sort, order, currentPage: 1, nextCursor: null }),
   setPage: (currentPage) => set({ currentPage, nextCursor: null }),
   applyProductsPage: (page) =>
-    set((s) => {
-      const sliderMax = Math.max(maxTiedUpCapital(page.items), s.tiedUpCapitalSliderMax);
-      return {
-        products: page.items,
-        chartData: page.chart_data,
-        total: page.total,
-        currentPage: page.currentPage,
-        totalPages: page.totalPages,
-        pageSize: page.pageSize,
-        nextCursor: page.nextCursor,
-        tiedUpCapitalSliderMax: sliderMax,
-        tiedUpCapitalMax:
-          s.tiedUpCapitalMax === s.tiedUpCapitalSliderMax || s.tiedUpCapitalMax === 0
-            ? sliderMax
-            : Math.min(s.tiedUpCapitalMax, sliderMax),
-        loading: false,
-      };
+    set({
+      products: page.items,
+      chartData: page.chart_data,
+      total: page.total,
+      currentPage: page.currentPage,
+      totalPages: page.totalPages,
+      pageSize: page.pageSize,
+      nextCursor: page.nextCursor,
+      loading: false,
     }),
   setLoading: (loading) => set({ loading }),
   clearFilters: () =>
     set((s) => ({
       term: '',
       itemStatuses: [],
-      iddMin: DEFAULT_IDD_MIN,
-      iddMax: DEFAULT_IDD_MAX,
-      stockDaysMin: DEFAULT_STOCK_DAYS_MIN,
-      stockDaysMax: DEFAULT_STOCK_DAYS_MAX,
-      tiedUpCapitalMin: 0,
-      tiedUpCapitalMax: s.tiedUpCapitalSliderMax,
+      iddMin: s.filterBounds.iddMin,
+      iddMax: s.filterBounds.iddMax,
+      stockDaysMin: s.filterBounds.stockDaysMin,
+      stockDaysMax: s.filterBounds.stockDaysMax,
+      tiedUpCapitalMin: s.filterBounds.tiedUpCapitalMin,
+      tiedUpCapitalMax: s.filterBounds.tiedUpCapitalMax,
       currentPage: 1,
       nextCursor: null,
     })),
@@ -200,23 +235,21 @@ export const useDashboardStore = create<DashboardState>((set) => ({
 
 export function buildProductsQuery(state: DashboardState): string {
   const params = new URLSearchParams();
+  const b = state.filterBounds;
   if (state.term.trim()) params.set('term', state.term.trim());
   for (const s of state.itemStatuses) {
     params.append('item_status', s);
   }
-  if (state.iddMin !== DEFAULT_IDD_MIN) params.set('idd_min', String(state.iddMin));
-  if (state.iddMax !== DEFAULT_IDD_MAX) params.set('idd_max', String(state.iddMax));
-  if (state.stockDaysMin !== DEFAULT_STOCK_DAYS_MIN)
+  if (state.iddMin !== b.iddMin) params.set('idd_min', String(state.iddMin));
+  if (state.iddMax !== b.iddMax) params.set('idd_max', String(state.iddMax));
+  if (state.stockDaysMin !== b.stockDaysMin)
     params.set('stock_days_min', String(state.stockDaysMin));
-  if (state.stockDaysMax !== DEFAULT_STOCK_DAYS_MAX)
+  if (state.stockDaysMax !== b.stockDaysMax)
     params.set('stock_days_max', String(state.stockDaysMax));
-  if (state.tiedUpCapitalMin > 0) params.set('tied_up_capital_min', String(state.tiedUpCapitalMin));
-  if (
-    state.tiedUpCapitalSliderMax > 0 &&
-    state.tiedUpCapitalMax < state.tiedUpCapitalSliderMax
-  ) {
+  if (state.tiedUpCapitalMin !== b.tiedUpCapitalMin)
+    params.set('tied_up_capital_min', String(state.tiedUpCapitalMin));
+  if (state.tiedUpCapitalMax !== b.tiedUpCapitalMax)
     params.set('tied_up_capital_max', String(state.tiedUpCapitalMax));
-  }
   params.set('sort', state.sort);
   params.set('order', state.order);
   params.set('limit', String(state.pageSize));

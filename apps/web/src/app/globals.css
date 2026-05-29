@@ -25,3 +25,17 @@
     cursor: not-allowed;
   }
 }
+
+@keyframes auth-decoration-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.auth-decoration-float {
+  animation: auth-decoration-drift 8s ease-in-out infinite;
+}
