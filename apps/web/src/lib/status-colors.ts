@@ -1,8 +1,6 @@
 import type { ItemStatus } from '@prudens/shared/types';
-import { STATUS_COLORS, statusColor } from '@/lib/idd-display';
+import { STATUS_CONFIG } from '@/lib/status-config';
 
 export function getStatusColor(status: ItemStatus): string {
-  return statusColor(status);
+  return STATUS_CONFIG[status]?.color ?? '#6b7280';
 }
-
-export const ITEM_STATUS_CHART_COLORS = STATUS_COLORS;

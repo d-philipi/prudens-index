@@ -46,5 +46,6 @@ export function toStockProductDto(row: typeof stockProducts.$inferSelect): Stock
     tiedUpCapital: row.tiedUpCapital,
     lostRevenue: row.lostRevenue,
     itemStatus: row.itemStatus as StockProductDto['itemStatus'],
+    actionInsight: row.actionInsight ?? null,
   };
 }

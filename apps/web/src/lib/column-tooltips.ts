@@ -25,5 +25,6 @@ export const COLUMN_TOOLTIPS: Record<string, string> = {
     'Valor financeiro do estoque que sobra após 30 dias sem ser vendido.',
   lostRevenue:
     'Valor que a empresa deixa de faturar por falta de estoque para suprir a demanda dos 30 dias.',
-  itemStatus: 'Classificação do produto com base no IDD.',
+  itemStatus:
+    'Classificação operacional com base em dias de estoque e IDD. Passe o mouse no badge para ver o detalhamento.',
 };

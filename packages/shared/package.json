@@ -8,7 +8,8 @@
     "./spreadsheetTemplate": "./src/spreadsheetTemplate.ts",
     "./spreadsheetFormats": "./src/spreadsheetFormats.ts",
     "./sheet-mapping": "./src/sheet-mapping.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./formatters": "./src/formatters.ts"
   },
   "scripts": {
     "build": "tsc",

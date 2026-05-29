@@ -12,7 +12,9 @@ import {
 import type { ChartDataPointDto } from '@prudens/shared/types';
 import { getStatusColor } from '@/lib/status-colors';
 import { formatPercent } from '@/lib/formatters';
+import { STATUS_CONFIG } from '@/lib/status-config';
 import { strings } from '@/lib/strings';
+import type { ItemStatus } from '@prudens/shared/types';
 
 interface Props {
   data: ChartDataPointDto[];
@@ -38,8 +40,11 @@ export function IddBarChart({ data }: Props) {
           <Tooltip
             formatter={(value: number) => [formatPercent(Number(value)), 'IDD']}
             labelFormatter={(_label, payload) => {
-              const point = payload?.[0]?.payload as { product_name?: string } | undefined;
-              return point?.product_name ?? '—';
+              const point = payload?.[0]?.payload as ChartDataPointDto | undefined;
+              if (!point?.product_name) return '—';
+              const statusLabel =
+                STATUS_CONFIG[point.item_status as ItemStatus]?.label ?? point.item_status;
+              return `${point.product_name} · ${statusLabel}`;
             }}
           />
           <Bar dataKey="idd" name="IDD">

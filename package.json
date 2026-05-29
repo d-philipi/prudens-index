@@ -10,7 +10,8 @@
     "test": "turbo run test",
     "smoke:sla": "tsx scripts/smoke-sla.ts",
     "smoke:dashboard-load": "tsx scripts/smoke-dashboard-load.ts",
-    "smoke:002": "tsx scripts/smoke-002-quickstart.ts"
+    "smoke:002": "tsx scripts/smoke-002-quickstart.ts",
+    "smoke:009": "tsx scripts/smoke-009-quickstart.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

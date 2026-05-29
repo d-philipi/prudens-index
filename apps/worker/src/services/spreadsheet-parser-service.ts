@@ -7,8 +7,7 @@ import {
   validateSpreadsheetHeaders,
 } from '@prudens/shared/spreadsheetTemplate';
 import { SHEET_COLUMN_MAPPING } from '@prudens/shared/sheet-mapping';
-import { computeItemStatusFromIdd } from '@prudens/domain-metrics';
-import type { ImportValidationError, ItemStatus } from '@prudens/shared/types';
+import type { ImportValidationError } from '@prudens/shared/types';
 
 export interface ParsedProductRow {
   productName: string;
@@ -22,7 +21,6 @@ export interface ParsedProductRow {
   averageDemand: string | null;
   stockDays: string | null;
   unitPrice: number | null;
-  itemStatus: ItemStatus;
 }
 
 export interface LineParseError {
@@ -132,20 +130,6 @@ export const spreadsheetParserService = {
         continue;
       }
 
-      let itemStatus: ItemStatus;
-      try {
-        itemStatus = computeItemStatusFromIdd(parsed.data.idd);
-      } catch {
-        lineErrors.push({
-          row_number: line,
-          column_name: 'IDD',
-          error_message: 'IDD inválido. Informe um número decimal válido.',
-          expected_value: 'Número decimal',
-          received_value: String(getSpreadsheetCell(row, 'IDD') ?? '(vazio)'),
-        });
-        continue;
-      }
-
       products.push({
         productName: parsed.data.product_name,
         ean: parsed.data.ean ?? null,
@@ -161,7 +145,6 @@ export const spreadsheetParserService = {
           parsed.data.unit_price != null && parsed.data.unit_price > 0
             ? parsed.data.unit_price
             : null,
-        itemStatus,
       });
 
       if (products.length > 5000) break;

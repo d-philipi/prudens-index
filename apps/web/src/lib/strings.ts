@@ -139,9 +139,4 @@ export const strings = {
     completed: 'Concluído',
     failed: 'Falhou',
   },
-  itemStatus: {
-    distribution: 'Redistribuição',
-    adequate: 'Adequado',
-    boost: 'Impulsionar',
-  },
 } as const;

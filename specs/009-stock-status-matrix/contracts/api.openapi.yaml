@@ -1,0 +1,145 @@
+openapi: 3.1.0
+info:
+  title: Prudens Index API
+  version: 0.9.0
+  description: Feature 009 — bidimensional item_status, action_insight, client filters
+
+servers:
+  - url: http://localhost:3001
+    description: Local API
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Clerk session JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ItemStatus:
+      type: string
+      enum:
+        - critical_rupture
+        - low_stock
+        - unbalanced
+        - stuck_stock
+        - slight_excess
+        - healthy
+        - concentrated
+
+    StockProduct:
+      type: object
+      required: [id, productName, itemStatus, idd]
+      properties:
+        id: { type: string, format: uuid }
+        productName: { type: string }
+        ean: { type: string, nullable: true }
+        storesWithStock: { type: integer }
+        distribution: { type: number, nullable: true }
+        branchesWithDemand: { type: integer }
+        demandVsDistribution: { type: number, nullable: true }
+        idd: { type: number }
+        stock: { type: integer, nullable: true }
+        averageDemand: { type: number, nullable: true }
+        stockDays: { type: number, nullable: true }
+        unitPrice: { type: number, nullable: true }
+        projectedRevenue: { type: integer, nullable: true }
+        tiedUpCapital: { type: integer, nullable: true }
+        lostRevenue: { type: integer, nullable: true }
+        itemStatus: { $ref: '#/components/schemas/ItemStatus' }
+        actionInsight:
+          type: string
+          nullable: true
+          description: Texto pt-BR gerado no worker; exibido no tooltip do badge
+
+    ChartDataPoint:
+      type: object
+      required: [product_name, idd, item_status]
+      properties:
+        product_name: { type: string }
+        idd: { type: number }
+        item_status: { $ref: '#/components/schemas/ItemStatus' }
+
+    ClientProductsResponse:
+      type: object
+      required: [products, total, chartData]
+      properties:
+        products:
+          type: array
+          items: { $ref: '#/components/schemas/StockProduct' }
+        total: { type: integer }
+        chartData:
+          type: array
+          items: { $ref: '#/components/schemas/ChartDataPoint' }
+        nextCursor: { type: string, nullable: true }
+
+paths:
+  /api/client/products:
+    get:
+      operationId: listClientProducts
+      summary: Lista produtos da importação ativa com filtros
+      parameters:
+        - name: item_status
+          in: query
+          description: Um ou mais status (repetido ou CSV). Valores legados rejeitados.
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/ItemStatus' }
+          style: form
+          explode: true
+        - name: term
+          in: query
+          schema: { type: string }
+        - name: stock_days_min
+          in: query
+          schema: { type: number, minimum: 0, maximum: 365 }
+        - name: stock_days_max
+          in: query
+          schema: { type: number, minimum: 0, maximum: 365 }
+        - name: tied_up_capital_min
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: tied_up_capital_max
+          in: query
+          schema: { type: number, minimum: 0 }
+        - name: idd_min
+          in: query
+          schema: { type: number }
+        - name: idd_max
+          in: query
+          schema: { type: number }
+        - name: sort
+          in: query
+          schema: { type: string }
+        - name: order
+          in: query
+          schema: { type: string, enum: [asc, desc] }
+        - name: cursor
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, maximum: 50 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientProductsResponse' }
+        '400':
+          description: Filtro inválido (ex. item_status legado)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Não autenticado
