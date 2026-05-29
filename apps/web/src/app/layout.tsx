@@ -1,6 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from 'next/font/google';
 import type { Metadata } from 'next';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import './globals.css';
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{ colorScheme: 'light only' }}
       >
         <body className="min-h-screen bg-surface-page font-sans text-brand antialiased">
-          {children}
+          <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
         </body>
       </html>
     </ClerkProvider>

@@ -1,11 +1,5 @@
-import { SignUp } from '@clerk/nextjs';
-import { authAppearance } from '@/lib/clerk-appearance';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { redirect } from 'next/navigation';
 
-export default function SignUpPage() {
-  return (
-    <AuthLayout>
-      <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" appearance={authAppearance} />
-    </AuthLayout>
-  );
+export default function SignUpRedirectPage() {
+  redirect('/accept-invite');
 }

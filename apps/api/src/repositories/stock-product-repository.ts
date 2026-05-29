@@ -157,4 +157,33 @@ export const stockProductRepository = {
     const n = row?.avg != null ? parseFloat(row.avg) : null;
     return n != null && Number.isFinite(n) ? n : null;
   },
+
+  async aggregateRanges(importJobId: string) {
+    const [row] = await db
+      .select({
+        iddMin: sql<string>`min(${stockProducts.idd}::numeric)`,
+        iddMax: sql<string>`max(${stockProducts.idd}::numeric)`,
+        stockDaysMin: sql<string>`min(${stockProducts.stockDays}::numeric)`,
+        stockDaysMax: sql<string>`max(${stockProducts.stockDays}::numeric)`,
+        tiedMin: sql<number>`min(${stockProducts.tiedUpCapital})`,
+        tiedMax: sql<number>`max(${stockProducts.tiedUpCapital})`,
+      })
+      .from(stockProducts)
+      .where(eq(stockProducts.importJobId, importJobId));
+
+    const parseNum = (v: string | number | null | undefined): number | null => {
+      if (v == null) return null;
+      const n = typeof v === 'number' ? v : parseFloat(v);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    return {
+      iddMin: parseNum(row?.iddMin),
+      iddMax: parseNum(row?.iddMax),
+      stockDaysMin: parseNum(row?.stockDaysMin),
+      stockDaysMax: parseNum(row?.stockDaysMax),
+      tiedUpCapitalMin: parseNum(row?.tiedMin),
+      tiedUpCapitalMax: parseNum(row?.tiedMax),
+    };
+  },
 };

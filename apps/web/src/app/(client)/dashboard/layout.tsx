@@ -5,7 +5,7 @@ import { parseRoleFromSessionClaims } from '@/lib/clerkRoles';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId, sessionClaims } = await auth();
-  if (!userId) redirect('/sign-in');
+  if (!userId) redirect('/login');
 
   const role = parseRoleFromSessionClaims(sessionClaims as Record<string, unknown> | null);
   if (role !== 'client') redirect('/acesso-pendente');

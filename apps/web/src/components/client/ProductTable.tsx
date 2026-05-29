@@ -1,6 +1,8 @@
 'use client';
 
 import type { ItemStatus, StockProductDto } from '@prudens/shared/types';
+import { ColumnHeader } from '@/features/dashboard/components/ColumnHeader';
+import { COLUMN_TOOLTIPS } from '@/lib/column-tooltips';
 import { formatCurrency, formatPercent, formatUnitPrice } from '@/lib/formatters';
 import { iddTableColor } from '@/lib/idd-display';
 import { strings } from '@/lib/strings';
@@ -10,7 +12,6 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 const COLUMNS: {
   key: keyof StockProductDto | 'itemStatus';
   label: string;
-  title?: string;
   mono?: boolean;
   minWidth: string;
 }[] = [
@@ -27,28 +28,24 @@ const COLUMNS: {
   {
     key: 'unitPrice',
     label: strings.client.unitPriceShort,
-    title: strings.client.unitPrice,
     mono: true,
     minWidth: '5rem',
   },
   {
     key: 'projectedRevenue',
     label: strings.client.projectedRevenueShort,
-    title: strings.client.projectedRevenue,
     mono: true,
     minWidth: '5.5rem',
   },
   {
     key: 'tiedUpCapital',
     label: strings.client.tiedUpCapitalShort,
-    title: strings.client.tiedUpCapital,
     mono: true,
     minWidth: '5.5rem',
   },
   {
     key: 'lostRevenue',
     label: strings.client.lostRevenueShort,
-    title: strings.client.lostRevenue,
     mono: true,
     minWidth: '5rem',
   },
@@ -126,21 +123,14 @@ export function ProductTable({
           <thead className="sticky top-0 z-10 border-b border-border-default bg-surface-page">
             <tr>
               {COLUMNS.map((col) => (
-                <th
+                <ColumnHeader
                   key={col.key}
-                  className="h-auto min-h-10 px-2 py-2 align-bottom text-[10px] font-medium uppercase leading-tight text-text-subtitle md:text-xs"
-                  style={{ minWidth: col.minWidth }}
-                  title={col.title}
-                >
-                  <button
-                    type="button"
-                    className="cursor-pointer whitespace-normal text-left hover:text-brand"
-                    onClick={() => toggleSort(col.key)}
-                  >
-                    {col.label}
-                    {isActiveSort(col.key) && (order === 'asc' ? ' ↑' : ' ↓')}
-                  </button>
-                </th>
+                  label={col.label}
+                  tooltip={COLUMN_TOOLTIPS[col.key] ?? col.label}
+                  active={isActiveSort(col.key)}
+                  direction={order}
+                  onSort={() => toggleSort(col.key)}
+                />
               ))}
             </tr>
           </thead>

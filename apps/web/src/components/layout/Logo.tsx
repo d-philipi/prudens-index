@@ -12,18 +12,18 @@ export function Logo({ variant = 'onDark', collapsed = false, className = '' }: 
   if (collapsed) {
     return (
       <span
-        className={`font-display text-sm font-bold leading-none tracking-tight ${className}`}
+        className={`font-display text-base font-bold leading-none tracking-tight ${className}`}
         aria-label="Prudens Index"
       >
-        <span className={ink}>IN</span>
-        <span className="text-brand-accent">DEX</span>
+        <span className={ink}>P</span>
+        <span className="text-brand-accent">I</span>
       </span>
     );
   }
 
   return (
     <span
-      className={`font-display text-lg leading-none ${className}`}
+      className={`inline-block text-center font-display text-lg leading-none ${className}`}
       aria-label="Prudens Index"
     >
       <span className={`font-normal ${ink}`}>Prudens/</span>

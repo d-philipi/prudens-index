@@ -1,0 +1,116 @@
+openapi: 3.1.0
+info:
+  title: Prudens Index API — 008 Custom Auth & Client UI
+  version: 0.1.0
+  description: Novos endpoints de ranges de filtros e exportação da planilha ativa.
+
+servers:
+  - url: http://localhost:3001
+    description: Local API
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Clerk session JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string, description: Mensagem em pt-BR }
+
+    NumericRange:
+      type: object
+      required: [min, max]
+      properties:
+        min: { type: number }
+        max: { type: number }
+
+    ProductRangesResponse:
+      type: object
+      required: [hasActiveJob, idd, stockDays, tiedUpCapital]
+      properties:
+        hasActiveJob:
+          type: boolean
+          description: false quando não há importação ativa concluída
+        idd:
+          allOf:
+            - $ref: '#/components/schemas/NumericRange'
+          nullable: true
+        stockDays:
+          allOf:
+            - $ref: '#/components/schemas/NumericRange'
+          nullable: true
+        tiedUpCapital:
+          allOf:
+            - $ref: '#/components/schemas/NumericRange'
+          nullable: true
+
+    ActiveFileExportResponse:
+      type: object
+      required: [url, filename]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL assinada R2 (TTL 60s)
+        filename:
+          type: string
+          description: Nome original da planilha (original_filename)
+
+paths:
+  /api/client/products/ranges:
+    get:
+      summary: Min/max de IDD, dias de estoque e capital imobilizado (job ativo)
+      tags: [Client Products]
+      responses:
+        '200':
+          description: Extremos calculados sobre todos os produtos do job ativo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductRangesResponse'
+        '401':
+          description: Não autenticado
+        '403':
+          description: Apenas perfil client
+
+  /api/client/export/active-file:
+    get:
+      summary: Download da planilha Excel original do job ativo
+      tags: [Client Export]
+      description: |
+        Preferência de implementação: HTTP 302 para URL presigned R2.
+        Alternativa: 200 com ActiveFileExportResponse e download via frontend.
+      responses:
+        '302':
+          description: Redirect para URL assinada (Content-Disposition no objeto R2 quando possível)
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+        '200':
+          description: Fallback JSON com URL assinada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveFileExportResponse'
+        '404':
+          description: Sem planilha ativa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: NO_ACTIVE_IMPORT
+                message: Não há planilha ativa para exportar.
+        '401':
+          description: Não autenticado
+        '403':
+          description: Apenas perfil client

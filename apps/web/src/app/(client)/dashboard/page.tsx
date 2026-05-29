@@ -7,7 +7,7 @@ import type { ClientOverviewDto, ClientProductsResponseDto } from '@prudens/shar
 export default async function DashboardPage() {
   const { getToken } = await auth();
   const token = await getToken();
-  if (!token) redirect('/sign-in');
+  if (!token) redirect('/login');
 
   const [overview, products] = await Promise.all([
     apiFetch<ClientOverviewDto>('/api/client/overview', { token }),

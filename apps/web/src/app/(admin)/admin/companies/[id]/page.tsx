@@ -14,7 +14,7 @@ interface PageProps {
 export default async function AdminCompanyDetailPage({ params }: PageProps) {
   const { getToken } = await auth();
   const token = await getToken();
-  if (!token) redirect('/sign-in');
+  if (!token) redirect('/login');
 
   const { id } = await params;
   let detail: AdminCompanyDetailDto | null = null;

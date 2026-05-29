@@ -27,12 +27,8 @@ export function Sidebar({ role, collapsed, hydrated, onToggle }: Props) {
       style={{ width }}
       aria-label="Barra lateral"
     >
-      <div
-        className={`flex h-14 shrink-0 items-center border-b border-white/10 ${
-          isCollapsed ? 'justify-center px-2' : 'px-4'
-        }`}
-      >
-        <Logo variant="onDark" collapsed={isCollapsed} />
+      <div className="flex h-14 shrink-0 items-center justify-center border-b border-white/10 px-2">
+        <Logo variant="onDark" collapsed={isCollapsed} className="mx-auto" />
       </div>
       <nav
         className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto py-2"

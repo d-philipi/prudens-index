@@ -1,10 +1,5 @@
-import { SignInEntry } from '@/components/auth/SignInEntry';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { redirect } from 'next/navigation';
 
-export default function SignInPage() {
-  return (
-    <AuthLayout>
-      <SignInEntry />
-    </AuthLayout>
-  );
+export default function SignInRedirectPage() {
+  redirect('/login');
 }

@@ -4,7 +4,14 @@ import { homePathForRole, parseRoleFromSessionClaims } from '@/lib/clerkRoles';
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)']);
 const isClientRoute = createRouteMatcher(['/dashboard(.*)']);
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/acesso-pendente']);
+const isPublicRoute = createRouteMatcher([
+  '/login',
+  '/verify',
+  '/accept-invite',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/acesso-pendente',
+]);
 const isAccessPendingRoute = createRouteMatcher(['/acesso-pendente']);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -12,7 +19,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   const { userId, sessionClaims } = await auth();
   if (!userId) {
-    return NextResponse.redirect(new URL('/sign-in', req.url));
+    return NextResponse.redirect(new URL('/login', req.url));
   }
 
   const role = parseRoleFromSessionClaims(

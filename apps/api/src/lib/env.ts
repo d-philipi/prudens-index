@@ -19,13 +19,13 @@ export function getCorsOrigins(): string[] | boolean {
 
 /**
  * Full URL where invitees land after clicking the Clerk invite link.
- * MUST include the `/sign-up` path. Do not append `/sign-up` again in callers.
+ * MUST include the `/accept-invite` path. Do not append the path again in callers.
  */
 export function getClerkInviteRedirectUrl(): string {
   const explicit = process.env.CLERK_INVITE_REDIRECT_URL?.trim();
   if (explicit) return explicit.replace(/\/$/, '');
   const appUrl = (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
-  return `${appUrl}/sign-up`;
+  return `${appUrl}/accept-invite`;
 }
 
 export const env = {

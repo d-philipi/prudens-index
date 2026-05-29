@@ -16,7 +16,7 @@ interface PageProps {
 export default async function AdminHomePage({ searchParams }: PageProps) {
   const { getToken } = await auth();
   const token = await getToken();
-  if (!token) redirect('/sign-in');
+  if (!token) redirect('/login');
 
   const { q } = await searchParams;
   const qParam = q ? `?q=${encodeURIComponent(q)}` : '';

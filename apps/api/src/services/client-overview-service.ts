@@ -17,6 +17,7 @@ export const clientOverviewService = {
         companyName: company?.name ?? 'Empresa',
         avgIdd: null,
         lastUpdatedAt: null,
+        activeImportJobId: null,
       };
     }
 
@@ -26,6 +27,7 @@ export const clientOverviewService = {
       companyName: company.name,
       avgIdd,
       lastUpdatedAt: active.completedAt?.toISOString() ?? null,
+      activeImportJobId: active.id,
     };
   },
 };

@@ -4,7 +4,7 @@ import { homePathForRole, parseRoleFromSessionClaims } from '@/lib/clerkRoles';
 
 export default async function HomePage() {
   const { userId, sessionClaims } = await auth();
-  if (!userId) redirect('/sign-in');
+  if (!userId) redirect('/login');
 
   const role = parseRoleFromSessionClaims(sessionClaims as Record<string, unknown> | null);
   if (!role) redirect('/acesso-pendente');

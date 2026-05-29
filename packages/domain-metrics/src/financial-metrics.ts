@@ -13,11 +13,11 @@ export function calculateFinancialMetrics(input: {
   if (!unit_price || unit_price <= 0) {
     return { projected_revenue: 0, tied_up_capital: 0, lost_revenue: 0 };
   }
-  const demand = average_demand ?? 0;
+  const flooredDemand = Math.floor(average_demand ?? 0);
   const stk = stock ?? 0;
   return {
-    projected_revenue: Math.round(Math.min(stk, demand) * unit_price),
-    tied_up_capital: Math.round(Math.max(0, stk - demand) * unit_price),
-    lost_revenue: Math.round(Math.max(0, demand - stk) * unit_price),
+    projected_revenue: Math.round(Math.min(stk, flooredDemand) * unit_price),
+    tied_up_capital: Math.round(Math.max(0, stk - flooredDemand) * unit_price),
+    lost_revenue: Math.round(Math.max(0, flooredDemand - stk) * unit_price),
   };
 }
