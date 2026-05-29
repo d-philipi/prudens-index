@@ -2,7 +2,14 @@ export type UserRole = 'admin' | 'client';
 
 export type ImportJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
-export type ItemStatus = 'distribution' | 'adequate' | 'boost';
+export type ItemStatus =
+  | 'critical_rupture'
+  | 'low_stock'
+  | 'unbalanced'
+  | 'stuck_stock'
+  | 'slight_excess'
+  | 'healthy'
+  | 'concentrated';
 
 export interface CompanyDto {
   id: string;
@@ -74,6 +81,7 @@ export interface StockProductDto {
   tiedUpCapital: number | null;
   lostRevenue: number | null;
   itemStatus: ItemStatus;
+  actionInsight: string | null;
 }
 
 export interface AdminMetricsDto {

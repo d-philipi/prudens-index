@@ -48,6 +48,15 @@ async function shouldRun(file: string): Promise<boolean> {
   if (file === '0004_stock_products_financial.sql') {
     return !(await columnExists('stock_products', 'unit_price'));
   }
+  if (file === '0005_stock_item_status_v2.sql') {
+    const rows = await db<{ exists: boolean }[]>`
+      SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'item_status_v2') AS exists
+    `;
+    return !(rows[0]?.exists ?? false);
+  }
+  if (file === '0006_add_action_insight.sql') {
+    return !(await columnExists('stock_products', 'action_insight'));
+  }
   return true;
 }
 

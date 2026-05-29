@@ -1,4 +1,5 @@
 import type { ItemStatus } from '@prudens/shared/types';
+import { STATUS_CONFIG } from '@/lib/status-config';
 
 export function iddHeroColor(idd: number | null | undefined): string {
   if (idd == null || Number.isNaN(idd)) return '#ffffff';
@@ -13,12 +14,6 @@ export function iddTableColor(idd: number | null | undefined): string {
   return '#f59e0b';
 }
 
-export const STATUS_COLORS: Record<ItemStatus, string> = {
-  distribution: '#e84040',
-  adequate: '#16a34a',
-  boost: '#f59e0b',
-};
-
 export function statusColor(status: ItemStatus): string {
-  return STATUS_COLORS[status];
+  return STATUS_CONFIG[status]?.color ?? '#6b7280';
 }

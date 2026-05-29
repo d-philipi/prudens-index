@@ -4,7 +4,7 @@ import '../lib/load-env.js';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import postgres from 'postgres';
 import { getR2Client } from '../lib/r2-client.js';
-import { calculateFinancialMetrics } from '@prudens/domain-metrics';
+import { calculateFinancialMetrics, calculateItemStatus } from '@prudens/domain-metrics';
 import { spreadsheetParserService } from '../services/spreadsheet-parser-service.js';
 
 const IMPORT_QUEUE_NAME = 'process-import';
@@ -59,16 +59,26 @@ async function runJob(importJobId: string) {
 
     for (const p of products) {
       const stock = p.stock != null ? Number(p.stock) : 0;
-      const avg = p.averageDemand != null ? Number(p.averageDemand) : 0;
+      const avgRaw = p.averageDemand != null ? Number(p.averageDemand) : 0;
+      const avgFloored = Math.floor(avgRaw);
+      const stockDays = p.stockDays != null ? Number(p.stockDays) : 0;
+      const idd = Number(p.idd);
       const unitPrice = p.unitPrice;
       const financial =
         unitPrice != null
           ? calculateFinancialMetrics({
               stock,
-              average_demand: avg,
+              average_demand: avgFloored,
               unit_price: unitPrice,
             })
           : null;
+
+      const { item_status, action_insight } = calculateItemStatus({
+        stock_days: stockDays,
+        idd,
+        average_demand: avgFloored,
+        tied_up_capital: financial?.tied_up_capital ?? 0,
+      });
 
       await sql`
         INSERT INTO stock_products (
@@ -76,7 +86,7 @@ async function runJob(importJobId: string) {
           stores_with_stock, distribution, branches_with_demand,
           demand_vs_distribution, idd, stock, average_demand, stock_days,
           unit_price, projected_revenue, tied_up_capital, lost_revenue,
-          item_status
+          item_status, action_insight
         ) VALUES (
           ${importJobId}, ${job.company_id}, ${p.productName}, ${p.ean},
           ${p.storesWithStock}, ${p.distribution},
@@ -84,7 +94,7 @@ async function runJob(importJobId: string) {
           ${p.idd}, ${p.stock}, ${p.averageDemand}, ${p.stockDays},
           ${unitPrice}, ${financial?.projected_revenue ?? null},
           ${financial?.tied_up_capital ?? null}, ${financial?.lost_revenue ?? null},
-          ${p.itemStatus}
+          ${item_status}, ${action_insight}
         )
       `;
     }

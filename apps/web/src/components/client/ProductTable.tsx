@@ -1,6 +1,6 @@
 'use client';
 
-import type { ItemStatus, StockProductDto } from '@prudens/shared/types';
+import type { StockProductDto } from '@prudens/shared/types';
 import { ColumnHeader } from '@/features/dashboard/components/ColumnHeader';
 import { COLUMN_TOOLTIPS } from '@/lib/column-tooltips';
 import { formatCurrency, formatPercent, formatUnitPrice } from '@/lib/formatters';
@@ -55,7 +55,6 @@ const COLUMNS: {
 function formatCell(p: StockProductDto, key: (typeof COLUMNS)[number]['key']): string {
   const v = p[key as keyof StockProductDto];
   if (v == null) return '—';
-  if (key === 'itemStatus') return strings.itemStatus[v as ItemStatus];
   if (key === 'distribution' || key === 'demandVsDistribution' || key === 'idd') {
     return formatPercent(Number(v), { decimals: 0 });
   }
@@ -144,24 +143,24 @@ export function ProductTable({
                     style={{ minWidth: col.minWidth }}
                     title={col.key === 'productName' ? p.productName : undefined}
                   >
-                    <span
-                      className={
-                        col.key === 'productName'
-                          ? 'line-clamp-2 break-words'
-                          : 'block truncate'
-                      }
-                      style={
-                        col.key === 'idd' && p.idd != null
-                          ? { color: iddTableColor(p.idd) }
-                          : undefined
-                      }
-                    >
-                      {col.key === 'itemStatus' ? (
-                        <StatusBadge status={p.itemStatus} />
-                      ) : (
-                        formatCell(p, col.key)
-                      )}
-                    </span>
+                    {col.key === 'itemStatus' ? (
+                      <StatusBadge status={p.itemStatus} actionInsight={p.actionInsight} />
+                    ) : (
+                      <span
+                        className={
+                          col.key === 'productName'
+                            ? 'line-clamp-2 break-words'
+                            : 'block truncate'
+                        }
+                        style={
+                          col.key === 'idd' && p.idd != null
+                            ? { color: iddTableColor(p.idd) }
+                            : undefined
+                        }
+                      >
+                        {formatCell(p, col.key)}
+                      </span>
+                    )}
                   </td>
                 ))}
               </tr>

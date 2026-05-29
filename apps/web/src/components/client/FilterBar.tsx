@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import type { ItemStatus } from '@prudens/shared/types';
 import { RangeFilter } from '@/features/dashboard/components/RangeFilter';
 import { formatCurrency, formatPercent } from '@/lib/formatters';
-import { statusColor } from '@/lib/idd-display';
+import { StatusFilterGroup } from '@/components/client/StatusFilterGroup';
 import { strings } from '@/lib/strings';
 
 interface Props {
@@ -29,8 +29,6 @@ interface Props {
   onTiedUpCapitalChange: (v: [number, number]) => void;
   onClear: () => void;
 }
-
-const ALL_STATUSES: ItemStatus[] = ['distribution', 'adequate', 'boost'];
 
 export function FilterBar({
   open,
@@ -98,26 +96,10 @@ export function FilterBar({
                 className="mt-1 w-full rounded-lg border border-border-default px-3 py-2 text-sm"
               />
             </div>
-            <fieldset className="min-w-0 shrink-0">
-              <legend className="text-xs font-medium text-brand">{strings.nav.statusFilter}</legend>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-                {ALL_STATUSES.map((status) => (
-                  <label key={status} className="flex cursor-pointer items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={itemStatuses.includes(status)}
-                      onChange={() => onStatusToggle(status)}
-                    />
-                    <span
-                      className="inline-block h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: statusColor(status) }}
-                      aria-hidden
-                    />
-                    {strings.itemStatus[status]}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+            <StatusFilterGroup
+              itemStatuses={itemStatuses}
+              onStatusToggle={onStatusToggle}
+            />
           </div>
 
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-nowrap lg:items-end">
