@@ -10,6 +10,13 @@ import {
 import { getProfileAccentColor, type LoginProfile } from '@/lib/auth-theme';
 import { cn } from '@/lib/utils';
 import { strings } from '@/lib/strings';
+import {
+  CLERK_VERIFY_CODE_SENT_KEY,
+  findEmailCodeFactor,
+  formatClerkError,
+  getPendingVerificationMode,
+  sendEmailVerificationCode,
+} from '@/lib/clerkSignIn';
 
 interface Props {
   profile: LoginProfile;
@@ -61,22 +68,25 @@ export function LoginForm({ profile, onProfileChange }: Props) {
         return;
       }
 
-      if (
-        result.status === 'needs_second_factor' ||
-        result.status === 'needs_first_factor'
-      ) {
+      const verificationMode = getPendingVerificationMode(result.status);
+      if (verificationMode) {
+        if (!findEmailCodeFactor(signIn, verificationMode)) {
+          setError(strings.auth.verifyUnsupportedFactor);
+          return;
+        }
+        await sendEmailVerificationCode(signIn, verificationMode);
+        sessionStorage.setItem(CLERK_VERIFY_CODE_SENT_KEY, '1');
         router.push('/verify');
         return;
       }
 
-      setError('Não foi possível concluir o login. Tente novamente.');
+      setError(strings.auth.signInIncomplete);
     } catch (err) {
-      const clerkErr = err as { errors?: Array<{ longMessage?: string; message?: string }> };
-      const msg =
-        clerkErr.errors?.[0]?.longMessage ??
-        clerkErr.errors?.[0]?.message ??
-        'E-mail ou senha inválidos.';
-      setError(msg);
+      if (err instanceof Error && err.message === 'EMAIL_CODE_FACTOR_NOT_FOUND') {
+        setError(strings.auth.verifyUnsupportedFactor);
+        return;
+      }
+      setError(formatClerkError(err, 'E-mail ou senha inválidos.'));
     } finally {
       setLoading(false);
     }

@@ -62,8 +62,26 @@ Após deploy, **reimportar** planilha se precisar alinhar métricas já persisti
 2. Alternar perfil Cliente/Admin — cores âmbar `#d4a020` / verde `#1a4731` com transição ~300ms.
 3. Login admin válido → `/admin`; cliente → `/dashboard`.
 4. Credencial válida com perfil errado → mensagem pt-BR, sem redirect.
-5. Fluxo que exige código → `/verify`.
+5. Fluxo que exige código → `/verify` (ver abaixo).
 6. Link de convite → `/accept-invite` → definir senha → redirect por `role`.
+
+### Verificação por e-mail (1º fator, 2º fator, Client Trust)
+
+Após e-mail + senha, o Clerk pode retornar `needs_first_factor`, `needs_second_factor` ou `needs_client_trust` (comum em domínio novo, ex. preview Vercel, por **Client Trust**).
+
+O app (`apps/web/src/lib/clerkSignIn.ts`):
+
+1. Chama `prepareFirstFactor` ou `prepareSecondFactor` com `email_code` **antes** de ir para `/verify` (dispara o e-mail).
+2. Em `/verify`, valida com `attemptFirstFactor` ou `attemptSecondFactor`.
+3. **Reenviar código** chama o mesmo `prepare*` de novo.
+4. Acesso direto a `/verify` sem tentativa de login ativa → redireciona para `/login`.
+
+Checklist (preview Vercel + API local/ngrok):
+
+1. Login com senha → se exigir código, e-mail chega (verificar spam).
+2. Código válido → redirect por `role` (`/` → `/admin` ou `/dashboard`).
+3. **Reenviar código** → segundo e-mail.
+4. Abrir `/verify` sem login → volta para `/login`.
 
 ## 3) CustomSelect
 
