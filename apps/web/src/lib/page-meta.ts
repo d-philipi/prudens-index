@@ -11,7 +11,15 @@ type PagePattern = {
 const PATTERNS: PagePattern[] = [
   {
     test: (p) => p === '/dashboard',
-    meta: { title: 'Dashboard', subtitle: 'Análise de estoque e IDD dos produtos' },
+    meta: { title: 'Dashboard', subtitle: 'Resumo executivo e gráfico de IDD' },
+  },
+  {
+    test: (p) => p === '/produtos',
+    meta: { title: 'Produtos', subtitle: 'Análise detalhada com filtros avançados' },
+  },
+  {
+    test: (p) => p === '/exportacao',
+    meta: { title: 'Exportação', subtitle: 'Planilhas e relatório PDF' },
   },
   {
     test: (p) => p === '/admin',

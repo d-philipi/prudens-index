@@ -61,7 +61,8 @@ async function runJob(importJobId: string) {
       const stock = p.stock != null ? Number(p.stock) : 0;
       const avgRaw = p.averageDemand != null ? Number(p.averageDemand) : 0;
       const avgFloored = Math.floor(avgRaw);
-      const stockDays = p.stockDays != null ? Number(p.stockDays) : 0;
+      const stockDaysRaw =
+        p.stockDays != null && p.stockDays !== '' ? Number(p.stockDays) : null;
       const idd = Number(p.idd);
       const unitPrice = p.unitPrice;
       const financial =
@@ -74,7 +75,8 @@ async function runJob(importJobId: string) {
           : null;
 
       const { item_status, action_insight } = calculateItemStatus({
-        stock_days: stockDays,
+        stock_days: stockDaysRaw,
+        stock,
         idd,
         average_demand: avgFloored,
         tied_up_capital: financial?.tied_up_capital ?? 0,

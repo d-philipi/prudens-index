@@ -1,0 +1,232 @@
+openapi: 3.1.0
+info:
+  title: Prudens Index API
+  version: 0.10.0
+  description: Feature 010 — dashboard summary, export versions, PDF report, status cascade updates
+
+servers:
+  - url: http://localhost:3001
+    description: Local API
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Clerk session JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+
+    ItemStatus:
+      type: string
+      enum:
+        - critical_rupture
+        - low_stock
+        - unbalanced
+        - stuck_stock
+        - slight_excess
+        - healthy
+        - concentrated
+
+    ProductHighlight:
+      type: object
+      required: [productName, value]
+      properties:
+        productName: { type: string }
+        ean: { type: string, nullable: true }
+        value: { type: number, description: 'Dias, IDD ou valor monetário conforme contexto' }
+
+    RiskProduct:
+      type: object
+      required: [productName, lostRevenue, tiedUpCapital, riskScore]
+      properties:
+        productName: { type: string }
+        ean: { type: string, nullable: true }
+        lostRevenue: { type: integer }
+        tiedUpCapital: { type: integer }
+        riskScore: { type: integer }
+
+    StatusCount:
+      type: object
+      required: [status, count]
+      properties:
+        status: { $ref: '#/components/schemas/ItemStatus' }
+        count: { type: integer, minimum: 0 }
+
+    ClientDashboardSummary:
+      type: object
+      required:
+        - totalProjectedRevenue
+        - totalTiedUpCapital
+        - totalLostRevenue
+        - statusCounts
+        - topRiskProducts
+      properties:
+        totalProjectedRevenue: { type: integer }
+        totalTiedUpCapital: { type: integer }
+        totalLostRevenue: { type: integer }
+        statusCounts:
+          type: array
+          items: { $ref: '#/components/schemas/StatusCount' }
+        topRiskProducts:
+          type: array
+          maxItems: 3
+          items: { $ref: '#/components/schemas/RiskProduct' }
+        minStockDays: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+        maxStockDays: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+        minIdd: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+        maxIdd: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+        minProjectedRevenue: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+        maxProjectedRevenue: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+        maxTiedUpCapital: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+        maxLostRevenue: { $ref: '#/components/schemas/ProductHighlight', nullable: true }
+
+    ExportVersion:
+      type: object
+      required: [jobId, filename, isActive]
+      properties:
+        jobId: { type: string, format: uuid }
+        filename: { type: string }
+        completedAt: { type: string, format: date-time, nullable: true }
+        isActive: { type: boolean }
+
+    ClientExportVersions:
+      type: object
+      required: [history]
+      properties:
+        active: { $ref: '#/components/schemas/ExportVersion', nullable: true }
+        history:
+          type: array
+          items: { $ref: '#/components/schemas/ExportVersion' }
+
+    ActiveFileExportResponse:
+      type: object
+      required: [url, filename]
+      properties:
+        url: { type: string, format: uri }
+        filename: { type: string }
+
+paths:
+  /api/client/dashboard/summary:
+    get:
+      summary: Resumo executivo da importação ativa
+      operationId: getClientDashboardSummary
+      parameters:
+        - name: item_status
+          in: query
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/ItemStatus' }
+          style: form
+          explode: true
+          description: Filtro simples por status (aba Dashboard)
+      responses:
+        '200':
+          description: Agregações sobre produtos da importação ativa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientDashboardSummary' }
+        '404':
+          description: Sem importação ativa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/client/export/versions:
+    get:
+      summary: Listar versões exportáveis (ativa + histórico concluído)
+      operationId: listClientExportVersions
+      responses:
+        '200':
+          description: Versões disponíveis para a empresa do cliente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientExportVersions' }
+
+  /api/client/export/active-file:
+    get:
+      summary: Download da planilha da importação ativa (presigned URL)
+      operationId: getClientActiveExportFile
+      parameters:
+        - name: format
+          in: query
+          schema: { type: string, enum: [json] }
+          description: json retorna { url, filename }; omitir redireciona 302
+      responses:
+        '200':
+          description: JSON com URL assinada ou redirect
+        '404':
+          description: Sem planilha ativa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/client/export/files/{jobId}:
+    get:
+      summary: Download de planilha por jobId (presigned URL)
+      operationId: getClientExportFileByJobId
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: format
+          in: query
+          schema: { type: string, enum: [json] }
+      responses:
+        '200':
+          description: JSON com URL assinada ou redirect 302
+        '403':
+          description: Job não pertence à empresa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Job inexistente ou sem arquivo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/client/export/pdf:
+    post:
+      summary: Gerar relatório PDF integral da importação ativa
+      operationId: exportClientDashboardPdf
+      description: Sem body — sempre inclui todos os produtos da importação ativa (spec FR-016).
+      responses:
+        '200':
+          description: PDF binário
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Sem importação ativa ou sem produtos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/client/overview:
+    get:
+      summary: Overview leve (IDD médio, empresa, job ativo) — inalterado
+      operationId: getClientOverview
+      responses:
+        '200':
+          description: ClientOverviewDto
+
+  /api/client/products:
+    get:
+      summary: Produtos paginados com filtros completos — inalterado (aba Produtos)
+      operationId: listClientProducts
+      responses:
+        '200':
+          description: ClientProductsResponseDto

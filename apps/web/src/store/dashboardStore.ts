@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import type {
   ChartDataPointDto,
+  ClientDashboardSummaryDto,
   ClientOverviewDto,
   ClientProductsResponseDto,
   ItemStatus,
@@ -56,8 +57,11 @@ function boundsFromRanges(ranges: ProductRangesResponseDto): FilterBounds {
 
 interface DashboardState {
   overview: ClientOverviewDto | null;
+  dashboardItemStatuses: ItemStatus[];
+  dashboardSummary: ClientDashboardSummaryDto | null;
+  dashboardChartData: ChartDataPointDto[];
+  dashboardLoading: boolean;
   products: StockProductDto[];
-  chartData: ChartDataPointDto[];
   total: number;
   currentPage: number;
   totalPages: number;
@@ -75,10 +79,18 @@ interface DashboardState {
   filtersPanelOpen: boolean;
   sort: string;
   order: 'asc' | 'desc';
-  loaded: boolean;
-  loading: boolean;
-  setInitial: (overview: ClientOverviewDto, page: ClientProductsResponseDto) => void;
+  productsLoaded: boolean;
+  productsLoading: boolean;
+  setInitialDashboard: (
+    overview: ClientOverviewDto,
+    summary: ClientDashboardSummaryDto,
+    chartData: ChartDataPointDto[],
+  ) => void;
+  setInitialProducts: (overview: ClientOverviewDto, page: ClientProductsResponseDto) => void;
   setRangeBounds: (ranges: ProductRangesResponseDto) => void;
+  setDashboardItemStatuses: (statuses: ItemStatus[]) => void;
+  applyDashboardData: (summary: ClientDashboardSummaryDto, chartData: ChartDataPointDto[]) => void;
+  setDashboardLoading: (loading: boolean) => void;
   setFilters: (partial: {
     term?: string;
     itemStatuses?: ItemStatus[];
@@ -93,7 +105,7 @@ interface DashboardState {
   setSort: (sort: string, order: 'asc' | 'desc') => void;
   setPage: (page: number) => void;
   applyProductsPage: (page: ClientProductsResponseDto) => void;
-  setLoading: (loading: boolean) => void;
+  setProductsLoading: (loading: boolean) => void;
   clearFilters: () => void;
   toggleFiltersPanel: () => void;
 }
@@ -127,8 +139,11 @@ export function hasActiveFilters(state: DashboardState): boolean {
 
 export const useDashboardStore = create<DashboardState>((set) => ({
   overview: null,
+  dashboardItemStatuses: [],
+  dashboardSummary: null,
+  dashboardChartData: [],
+  dashboardLoading: false,
   products: [],
-  chartData: [],
   total: 0,
   currentPage: 1,
   totalPages: 1,
@@ -146,20 +161,27 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   filtersPanelOpen: false,
   sort: 'idd',
   order: 'desc',
-  loaded: false,
-  loading: false,
-  setInitial: (overview, page) => {
+  productsLoaded: false,
+  productsLoading: false,
+  setInitialDashboard: (overview, summary, chartData) => {
+    set({
+      overview,
+      dashboardSummary: summary,
+      dashboardChartData: chartData,
+      dashboardLoading: false,
+    });
+  },
+  setInitialProducts: (overview, page) => {
     set({
       overview,
       products: page.items,
-      chartData: page.chart_data,
       total: page.total,
       currentPage: page.currentPage,
       totalPages: page.totalPages,
       pageSize: page.pageSize,
       nextCursor: page.nextCursor,
-      loaded: true,
-      loading: false,
+      productsLoaded: true,
+      productsLoading: false,
     });
   },
   setRangeBounds: (ranges) => {
@@ -174,6 +196,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       tiedUpCapitalMax: b.tiedUpCapitalMax,
     });
   },
+  setDashboardItemStatuses: (dashboardItemStatuses) => set({ dashboardItemStatuses }),
+  applyDashboardData: (summary, chartData) =>
+    set({ dashboardSummary: summary, dashboardChartData: chartData, dashboardLoading: false }),
+  setDashboardLoading: (dashboardLoading) => set({ dashboardLoading }),
   setFilters: (partial) =>
     set((s) => {
       const idd = applyRangeUpdate(s.iddMin, s.iddMax, partial.iddMin, partial.iddMax);
@@ -208,15 +234,14 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   applyProductsPage: (page) =>
     set({
       products: page.items,
-      chartData: page.chart_data,
       total: page.total,
       currentPage: page.currentPage,
       totalPages: page.totalPages,
       pageSize: page.pageSize,
       nextCursor: page.nextCursor,
-      loading: false,
+      productsLoading: false,
     }),
-  setLoading: (loading) => set({ loading }),
+  setProductsLoading: (productsLoading) => set({ productsLoading }),
   clearFilters: () =>
     set((s) => ({
       term: '',
@@ -232,6 +257,29 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     })),
   toggleFiltersPanel: () => set((s) => ({ filtersPanelOpen: !s.filtersPanelOpen })),
 }));
+
+export function buildDashboardSummaryQuery(
+  state: Pick<DashboardState, 'dashboardItemStatuses'>,
+): string {
+  const params = new URLSearchParams();
+  for (const s of state.dashboardItemStatuses) {
+    params.append('item_status', s);
+  }
+  return params.toString();
+}
+
+export function buildDashboardChartQuery(
+  state: Pick<DashboardState, 'dashboardItemStatuses'>,
+): string {
+  const params = new URLSearchParams();
+  for (const s of state.dashboardItemStatuses) {
+    params.append('item_status', s);
+  }
+  params.set('limit', '1');
+  params.set('sort', 'idd');
+  params.set('order', 'desc');
+  return params.toString();
+}
 
 export function buildProductsQuery(state: DashboardState): string {
   const params = new URLSearchParams();

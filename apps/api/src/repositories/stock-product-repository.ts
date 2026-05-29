@@ -14,7 +14,14 @@ import {
 } from 'drizzle-orm';
 import { db } from '../lib/db.js';
 import { stockProducts } from '../../drizzle/schema/stock-products.js';
-import type { ItemStatus } from '@prudens/shared/types';
+import type {
+  ClientDashboardSummaryDto,
+  ItemStatus,
+  ProductHighlightDto,
+  RiskProductDto,
+  StatusCountDto,
+} from '@prudens/shared/types';
+import { STATUS_DISPLAY_ORDER } from '@prudens/shared/status-config';
 
 export interface ProductQueryParams {
   companyId: string;
@@ -156,6 +163,182 @@ export const stockProductRepository = {
       );
     const n = row?.avg != null ? parseFloat(row.avg) : null;
     return n != null && Number.isFinite(n) ? n : null;
+  },
+
+  async aggregateExecutiveSummary(
+    params: ProductQueryParams,
+  ): Promise<ClientDashboardSummaryDto> {
+    const where = buildWhere(params);
+
+    const [totals] = await db
+      .select({
+        totalProjectedRevenue: sql<number>`coalesce(sum(${stockProducts.projectedRevenue}), 0)`,
+        totalTiedUpCapital: sql<number>`coalesce(sum(${stockProducts.tiedUpCapital}), 0)`,
+        totalLostRevenue: sql<number>`coalesce(sum(${stockProducts.lostRevenue}), 0)`,
+      })
+      .from(stockProducts)
+      .where(where);
+
+    const statusRows = await db
+      .select({
+        status: stockProducts.itemStatus,
+        count: count(),
+      })
+      .from(stockProducts)
+      .where(where)
+      .groupBy(stockProducts.itemStatus);
+
+    const countMap = new Map<ItemStatus, number>(
+      statusRows.map((r) => [r.status, Number(r.count)]),
+    );
+    const statusCounts: StatusCountDto[] = STATUS_DISPLAY_ORDER.map((status) => ({
+      status,
+      count: countMap.get(status) ?? 0,
+    }));
+
+    const riskRows = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        lostRevenue: stockProducts.lostRevenue,
+        tiedUpCapital: stockProducts.tiedUpCapital,
+      })
+      .from(stockProducts)
+      .where(where)
+      .orderBy(
+        sql`(coalesce(${stockProducts.lostRevenue}, 0) + coalesce(${stockProducts.tiedUpCapital}, 0)) desc`,
+        asc(stockProducts.productName),
+      )
+      .limit(3);
+
+    const topRiskProducts: RiskProductDto[] = riskRows.map((r) => {
+      const lost = r.lostRevenue ?? 0;
+      const tied = r.tiedUpCapital ?? 0;
+      return {
+        productName: r.productName,
+        ean: r.ean,
+        lostRevenue: lost,
+        tiedUpCapital: tied,
+        riskScore: lost + tied,
+      };
+    });
+
+    const toHighlight = (
+      row: {
+        productName: string;
+        ean: string | null;
+        value: string | number | null;
+      } | undefined,
+    ): ProductHighlightDto | null => {
+      if (!row || row.value == null) return null;
+      const n = typeof row.value === 'number' ? row.value : parseFloat(String(row.value));
+      if (!Number.isFinite(n)) return null;
+      return { productName: row.productName, ean: row.ean, value: n };
+    };
+
+    const [minStockDays] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.stockDays,
+      })
+      .from(stockProducts)
+      .where(and(where, sql`${stockProducts.stockDays} is not null`))
+      .orderBy(asc(stockProducts.stockDays))
+      .limit(1);
+
+    const [maxStockDays] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.stockDays,
+      })
+      .from(stockProducts)
+      .where(where)
+      .orderBy(desc(stockProducts.stockDays))
+      .limit(1);
+
+    const [minIdd] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.idd,
+      })
+      .from(stockProducts)
+      .where(where)
+      .orderBy(asc(stockProducts.idd))
+      .limit(1);
+
+    const [maxIdd] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.idd,
+      })
+      .from(stockProducts)
+      .where(where)
+      .orderBy(desc(stockProducts.idd))
+      .limit(1);
+
+    const [minProjectedRevenue] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.projectedRevenue,
+      })
+      .from(stockProducts)
+      .where(and(where, sql`${stockProducts.projectedRevenue} is not null`))
+      .orderBy(asc(stockProducts.projectedRevenue))
+      .limit(1);
+
+    const [maxProjectedRevenue] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.projectedRevenue,
+      })
+      .from(stockProducts)
+      .where(where)
+      .orderBy(desc(stockProducts.projectedRevenue))
+      .limit(1);
+
+    const [maxTiedUpCapital] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.tiedUpCapital,
+      })
+      .from(stockProducts)
+      .where(and(where, sql`${stockProducts.tiedUpCapital} is not null`))
+      .orderBy(desc(stockProducts.tiedUpCapital))
+      .limit(1);
+
+    const [maxLostRevenue] = await db
+      .select({
+        productName: stockProducts.productName,
+        ean: stockProducts.ean,
+        value: stockProducts.lostRevenue,
+      })
+      .from(stockProducts)
+      .where(and(where, sql`${stockProducts.lostRevenue} is not null`))
+      .orderBy(desc(stockProducts.lostRevenue))
+      .limit(1);
+
+    return {
+      totalProjectedRevenue: Number(totals?.totalProjectedRevenue ?? 0),
+      totalTiedUpCapital: Number(totals?.totalTiedUpCapital ?? 0),
+      totalLostRevenue: Number(totals?.totalLostRevenue ?? 0),
+      statusCounts,
+      topRiskProducts,
+      minStockDays: toHighlight(minStockDays),
+      maxStockDays: toHighlight(maxStockDays),
+      minIdd: toHighlight(minIdd),
+      maxIdd: toHighlight(maxIdd),
+      minProjectedRevenue: toHighlight(minProjectedRevenue),
+      maxProjectedRevenue: toHighlight(maxProjectedRevenue),
+      maxTiedUpCapital: toHighlight(maxTiedUpCapital),
+      maxLostRevenue: toHighlight(maxLostRevenue),
+    };
   },
 
   async aggregateRanges(importJobId: string) {

@@ -32,9 +32,17 @@ export async function apiFetch<T>(
 
 /** Baixa a planilha ativa (302 redirect ou JSON com URL assinada). */
 export async function downloadActiveSpreadsheet(token: string): Promise<void> {
+  await downloadExportFile(token);
+}
+
+/** Baixa planilha por jobId ou a ativa quando jobId omitido. */
+export async function downloadExportFile(token: string, jobId?: string): Promise<void> {
+  const path = jobId
+    ? `/api/client/export/files/${jobId}?format=json`
+    : '/api/client/export/active-file?format=json';
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/client/export/active-file?format=json`, {
+    res = await fetch(`${API_URL}${path}`, {
       headers: { Authorization: `Bearer ${token}` },
       redirect: 'manual',
     });
@@ -61,4 +69,32 @@ export async function downloadActiveSpreadsheet(token: string): Promise<void> {
   if (data.url) {
     window.location.href = data.url;
   }
+}
+
+/** Gera e baixa o relatório PDF integral da importação ativa. */
+export async function downloadDashboardPdf(token: string): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/client/export/pdf`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error(
+      `Não foi possível conectar à API (${API_URL}). Confirme que a API está em execução.`,
+    );
+  }
+
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(err.message ?? `Erro ao gerar PDF (${res.status})`);
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'relatorio-estoque.pdf';
+  anchor.click();
+  URL.revokeObjectURL(url);
 }

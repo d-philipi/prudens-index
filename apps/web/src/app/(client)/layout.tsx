@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { AppShellWrapper } from '@/components/layout/AppShellWrapper';
 import { parseRoleFromSessionClaims } from '@/lib/clerkRoles';
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function ClientLayout({ children }: { children: React.ReactNode }) {
   const { userId, sessionClaims } = await auth();
   if (!userId) redirect('/login');
 

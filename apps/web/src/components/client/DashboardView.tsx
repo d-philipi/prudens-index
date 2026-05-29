@@ -2,126 +2,79 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useRef } from 'react';
-import type { ProductRangesResponseDto } from '@prudens/shared/types';
-import { apiFetch } from '@/lib/apiClient';
-import {
-  buildProductsQuery,
-  hasActiveFilters,
-  useDashboardStore,
-} from '@/store/dashboardStore';
 import type {
+  ClientDashboardSummaryDto,
   ClientOverviewDto,
   ClientProductsResponseDto,
   ItemStatus,
 } from '@prudens/shared/types';
-import { ExportButton } from '@/features/dashboard/components/ExportButton';
+import { apiFetch } from '@/lib/apiClient';
+import {
+  buildDashboardChartQuery,
+  buildDashboardSummaryQuery,
+  useDashboardStore,
+} from '@/store/dashboardStore';
 import { IndexHeader } from './IndexHeader';
-import { FilterBar } from './FilterBar';
+import { ExecutiveSummary } from './ExecutiveSummary';
+import { DashboardStatusFilter } from './DashboardStatusFilter';
 import { IddBarChart } from './IddBarChart';
-import { ProductTable } from './ProductTable';
 import { strings } from '@/lib/strings';
 
 interface Props {
   initialOverview: ClientOverviewDto;
-  initialProducts: ClientProductsResponseDto;
+  initialSummary: ClientDashboardSummaryDto;
+  initialChartData: ClientProductsResponseDto['chart_data'];
 }
 
-export function DashboardView({ initialOverview, initialProducts }: Props) {
+export function DashboardView({ initialOverview, initialSummary, initialChartData }: Props) {
   const { getToken } = useAuth();
-  const setInitial = useDashboardStore((s) => s.setInitial);
-  const setRangeBounds = useDashboardStore((s) => s.setRangeBounds);
+  const setInitialDashboard = useDashboardStore((s) => s.setInitialDashboard);
+  const setDashboardItemStatuses = useDashboardStore((s) => s.setDashboardItemStatuses);
+  const applyDashboardData = useDashboardStore((s) => s.applyDashboardData);
+  const setDashboardLoading = useDashboardStore((s) => s.setDashboardLoading);
   const overview = useDashboardStore((s) => s.overview);
-  const filterBounds = useDashboardStore((s) => s.filterBounds);
-  const products = useDashboardStore((s) => s.products);
-  const chartData = useDashboardStore((s) => s.chartData);
-  const total = useDashboardStore((s) => s.total);
-  const term = useDashboardStore((s) => s.term);
-  const itemStatuses = useDashboardStore((s) => s.itemStatuses);
-  const iddMin = useDashboardStore((s) => s.iddMin);
-  const iddMax = useDashboardStore((s) => s.iddMax);
-  const stockDaysMin = useDashboardStore((s) => s.stockDaysMin);
-  const stockDaysMax = useDashboardStore((s) => s.stockDaysMax);
-  const tiedUpCapitalMin = useDashboardStore((s) => s.tiedUpCapitalMin);
-  const tiedUpCapitalMax = useDashboardStore((s) => s.tiedUpCapitalMax);
-  const filtersPanelOpen = useDashboardStore((s) => s.filtersPanelOpen);
-  const sort = useDashboardStore((s) => s.sort);
-  const order = useDashboardStore((s) => s.order);
-  const setFilters = useDashboardStore((s) => s.setFilters);
-  const setSort = useDashboardStore((s) => s.setSort);
-  const setPage = useDashboardStore((s) => s.setPage);
-  const applyProductsPage = useDashboardStore((s) => s.applyProductsPage);
-  const clearFilters = useDashboardStore((s) => s.clearFilters);
-  const toggleFiltersPanel = useDashboardStore((s) => s.toggleFiltersPanel);
-  const currentPage = useDashboardStore((s) => s.currentPage);
-  const totalPages = useDashboardStore((s) => s.totalPages);
-  const setLoading = useDashboardStore((s) => s.setLoading);
-  const loading = useDashboardStore((s) => s.loading);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dashboardItemStatuses = useDashboardStore((s) => s.dashboardItemStatuses);
+  const dashboardSummary = useDashboardStore((s) => s.dashboardSummary);
+  const dashboardChartData = useDashboardStore((s) => s.dashboardChartData);
+  const dashboardLoading = useDashboardStore((s) => s.dashboardLoading);
   const skipFirstRefetch = useRef(true);
 
   useEffect(() => {
-    setInitial(initialOverview, initialProducts);
-  }, [initialOverview, initialProducts, setInitial]);
+    setInitialDashboard(initialOverview, initialSummary, initialChartData);
+  }, [initialOverview, initialSummary, initialChartData, setInitialDashboard]);
 
-  useEffect(() => {
-    void (async () => {
-      const token = await getToken();
-      if (!token) return;
-      try {
-        const ranges = await apiFetch<ProductRangesResponseDto>(
-          '/api/client/products/ranges',
-          { token },
-        );
-        setRangeBounds(ranges);
-      } catch {
-        /* keep defaults */
-      }
-    })();
-  }, [getToken, setRangeBounds]);
-
-  const refetchProducts = useCallback(async () => {
+  const refetchDashboard = useCallback(async () => {
     const token = await getToken();
     if (!token) return;
-    setLoading(true);
+    setDashboardLoading(true);
     const state = useDashboardStore.getState();
-    const qs = buildProductsQuery(state);
-    const page = await apiFetch<ClientProductsResponseDto>(
-      `/api/client/products?${qs}`,
-      { token },
-    );
-    applyProductsPage(page);
-  }, [getToken, applyProductsPage, setLoading]);
+    const summaryQs = buildDashboardSummaryQuery(state);
+    const chartQs = buildDashboardChartQuery(state);
+    const summaryPath = summaryQs
+      ? `/api/client/dashboard/summary?${summaryQs}`
+      : '/api/client/dashboard/summary';
+    try {
+      const [summary, products] = await Promise.all([
+        apiFetch<ClientDashboardSummaryDto>(summaryPath, { token }),
+        apiFetch<ClientProductsResponseDto>(`/api/client/products?${chartQs}`, { token }),
+      ]);
+      applyDashboardData(summary, products.chart_data);
+    } catch {
+      setDashboardLoading(false);
+    }
+  }, [getToken, applyDashboardData, setDashboardLoading]);
 
   useEffect(() => {
     if (skipFirstRefetch.current) {
       skipFirstRefetch.current = false;
       return;
     }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      void refetchProducts();
-    }, 300);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [
-    term,
-    itemStatuses,
-    iddMin,
-    iddMax,
-    stockDaysMin,
-    stockDaysMax,
-    tiedUpCapitalMin,
-    tiedUpCapitalMax,
-    sort,
-    order,
-    currentPage,
-    refetchProducts,
-  ]);
+    void refetchDashboard();
+  }, [dashboardItemStatuses, refetchDashboard]);
 
   const displayOverview = overview ?? initialOverview;
-  const activeFilters = hasActiveFilters(useDashboardStore.getState());
-  const canExport = Boolean(displayOverview.activeImportJobId);
+  const displaySummary = dashboardSummary ?? initialSummary;
+  const displayChart = dashboardChartData.length > 0 ? dashboardChartData : initialChartData;
 
   if (!displayOverview.lastUpdatedAt && !displayOverview.activeImportJobId) {
     return (
@@ -132,64 +85,24 @@ export function DashboardView({ initialOverview, initialProducts }: Props) {
   }
 
   const toggleStatus = (status: ItemStatus) => {
-    const next = itemStatuses.includes(status)
-      ? itemStatuses.filter((s) => s !== status)
-      : [...itemStatuses, status];
-    setFilters({ itemStatuses: next });
-  };
-
-  const handleSort = (column: string) => {
-    if (sort === column) {
-      setSort(column, order === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSort(column, 'desc');
-    }
+    const next = dashboardItemStatuses.includes(status)
+      ? dashboardItemStatuses.filter((s) => s !== status)
+      : [...dashboardItemStatuses, status];
+    setDashboardItemStatuses(next);
   };
 
   return (
     <div className="flex flex-col gap-4 overflow-x-hidden">
       <IndexHeader overview={displayOverview} />
-      {loading ? (
-        <p className="text-xs text-text-subtitle">{strings.client.updatingProducts}</p>
+      {dashboardLoading ? (
+        <p className="text-xs text-text-subtitle">{strings.client.updatingDashboard}</p>
       ) : null}
-      <IddBarChart data={chartData} />
-      <FilterBar
-        open={filtersPanelOpen}
-        onToggle={toggleFiltersPanel}
-        term={term}
-        itemStatuses={itemStatuses}
-        iddMin={iddMin}
-        iddMax={iddMax}
-        stockDaysMin={stockDaysMin}
-        stockDaysMax={stockDaysMax}
-        tiedUpCapitalMin={tiedUpCapitalMin}
-        tiedUpCapitalMax={tiedUpCapitalMax}
-        boundsIdd={[filterBounds.iddMin, filterBounds.iddMax]}
-        boundsStockDays={[filterBounds.stockDaysMin, filterBounds.stockDaysMax]}
-        boundsCapital={[filterBounds.tiedUpCapitalMin, filterBounds.tiedUpCapitalMax]}
-        showClear={activeFilters}
-        onTermChange={(t) => setFilters({ term: t })}
+      <ExecutiveSummary summary={displaySummary} />
+      <DashboardStatusFilter
+        itemStatuses={dashboardItemStatuses}
         onStatusToggle={toggleStatus}
-        onIddChange={([lo, hi]) => setFilters({ iddMin: lo, iddMax: hi })}
-        onStockDaysChange={([lo, hi]) => setFilters({ stockDaysMin: lo, stockDaysMax: hi })}
-        onTiedUpCapitalChange={([lo, hi]) =>
-          setFilters({ tiedUpCapitalMin: lo, tiedUpCapitalMax: hi })
-        }
-        onClear={clearFilters}
       />
-      <div className="flex justify-end">
-        <ExportButton canExport={canExport} />
-      </div>
-      <ProductTable
-        products={products}
-        total={total}
-        sort={sort}
-        order={order}
-        onSort={handleSort}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page) => setPage(page)}
-      />
+      <IddBarChart data={displayChart} />
     </div>
   );
 }

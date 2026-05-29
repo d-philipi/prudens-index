@@ -138,6 +138,53 @@ export interface ActiveFileExportResponseDto {
   filename: string;
 }
 
+export interface ProductHighlightDto {
+  productName: string;
+  ean: string | null;
+  value: number;
+}
+
+export interface RiskProductDto {
+  productName: string;
+  ean: string | null;
+  lostRevenue: number;
+  tiedUpCapital: number;
+  riskScore: number;
+}
+
+export interface StatusCountDto {
+  status: ItemStatus;
+  count: number;
+}
+
+export interface ClientDashboardSummaryDto {
+  totalProjectedRevenue: number;
+  totalTiedUpCapital: number;
+  totalLostRevenue: number;
+  statusCounts: StatusCountDto[];
+  topRiskProducts: RiskProductDto[];
+  minStockDays: ProductHighlightDto | null;
+  maxStockDays: ProductHighlightDto | null;
+  minIdd: ProductHighlightDto | null;
+  maxIdd: ProductHighlightDto | null;
+  minProjectedRevenue: ProductHighlightDto | null;
+  maxProjectedRevenue: ProductHighlightDto | null;
+  maxTiedUpCapital: ProductHighlightDto | null;
+  maxLostRevenue: ProductHighlightDto | null;
+}
+
+export interface ExportVersionDto {
+  jobId: string;
+  filename: string;
+  completedAt: string | null;
+  isActive: boolean;
+}
+
+export interface ClientExportVersionsDto {
+  active: ExportVersionDto | null;
+  history: ExportVersionDto[];
+}
+
 export interface ChartDataPointDto {
   product_name: string;
   idd: number;

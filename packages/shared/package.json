@@ -9,7 +9,8 @@
     "./spreadsheetFormats": "./src/spreadsheetFormats.ts",
     "./sheet-mapping": "./src/sheet-mapping.ts",
     "./types": "./src/types/index.ts",
-    "./formatters": "./src/formatters.ts"
+    "./formatters": "./src/formatters.ts",
+    "./status-config": "./src/status-config.ts"
   },
   "scripts": {
     "build": "tsc",

@@ -8,6 +8,7 @@ import { adminUsersRoutes } from './routes/admin-users.js';
 import { adminCompaniesRoutes } from './routes/admin-companies.js';
 import { adminImportsRoutes } from './routes/admin-imports.js';
 import { adminMetricsRoutes } from './routes/admin-metrics.js';
+import { clientDashboardSummaryRoutes } from './routes/client-dashboard-summary.js';
 import { clientExportRoutes } from './routes/client-export.js';
 import { clientOverviewRoutes } from './routes/client-overview.js';
 import { clientProductsRoutes } from './routes/client-products.js';
@@ -33,6 +34,7 @@ await app.register(adminUsersRoutes);
 await app.register(adminCompaniesRoutes);
 await app.register(adminImportsRoutes);
 await app.register(clientOverviewRoutes);
+await app.register(clientDashboardSummaryRoutes);
 await app.register(clientProductsRoutes);
 await app.register(clientExportRoutes);
 
