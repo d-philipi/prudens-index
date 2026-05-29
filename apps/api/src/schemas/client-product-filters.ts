@@ -78,18 +78,3 @@ export const clientProductsQuerySchema = withRangeRefine(
 );
 
 export type ClientProductFiltersInput = z.infer<typeof clientProductFiltersSchema>;
-
-export const clientExportBodySchema = withRangeRefine(
-  z.object({
-    term: z.string().optional(),
-    itemStatuses: z.array(itemStatusEnum).default([]),
-    iddMin: z.coerce.number().min(-100).max(100).optional(),
-    iddMax: z.coerce.number().min(-100).max(100).optional(),
-    stockDaysMin: z.coerce.number().min(0).max(365).optional(),
-    stockDaysMax: z.coerce.number().min(0).max(365).optional(),
-    tiedUpCapitalMin: z.coerce.number().min(0).optional(),
-    tiedUpCapitalMax: z.coerce.number().min(0).optional(),
-  }),
-);
-
-export type ClientExportBodyInput = z.infer<typeof clientExportBodySchema>;

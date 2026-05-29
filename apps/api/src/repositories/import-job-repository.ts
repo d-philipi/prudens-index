@@ -67,4 +67,14 @@ export const importJobRepository = {
       .limit(1);
     return rows[0] ?? null;
   },
+
+  async listCompletedByCompany(companyId: string) {
+    return db
+      .select()
+      .from(importJobs)
+      .where(
+        and(eq(importJobs.companyId, companyId), eq(importJobs.status, 'completed')),
+      )
+      .orderBy(desc(importJobs.completedAt));
+  },
 };

@@ -3,11 +3,12 @@ import {
   Building2,
   Download,
   LayoutDashboard,
+  Package,
   Users,
   type LucideIcon,
 } from 'lucide-react';
 
-export type NavItemId = 'dashboard' | 'companies' | 'users' | 'imports';
+export type NavItemId = 'dashboard' | 'produtos' | 'exportacao' | 'companies' | 'users' | 'imports';
 
 export interface NavItemConfig {
   id: NavItemId;
@@ -23,6 +24,20 @@ export const NAV_ITEMS: NavItemConfig[] = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+    roles: ['client'],
+  },
+  {
+    id: 'produtos',
+    label: 'Produtos',
+    href: '/produtos',
+    icon: Package,
+    roles: ['client'],
+  },
+  {
+    id: 'exportacao',
+    label: 'Exportação',
+    href: '/exportacao',
+    icon: Download,
     roles: ['client'],
   },
   {

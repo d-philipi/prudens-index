@@ -11,7 +11,8 @@
     "lint": "echo lint api",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "backfill:status": "tsx src/scripts/backfill-item-status.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",
